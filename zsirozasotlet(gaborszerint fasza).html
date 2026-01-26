@@ -66,17 +66,17 @@ body {
 <div class="hand" id="hand1"></div>
 
 <script>
-const suits = ["zöld","szív","tök","makk"];
-const values = ["7","8","9","10","alsó","felső","király","ász"];
+const szinek = ["zöld","szív","tök","makk"];
+const ertekek = ["7","8","9","10","alsó","felső","király","ász"];
 
-const suitMap = {
+const szin = {
     "zöld": "level",
     "szív": "sziv",
     "tök": "tok",
     "makk": "makk"
 };
 
-const valueMap = {
+const ertek = {
     "7":"7",
     "8":"8",
     "9":"9",
@@ -87,97 +87,103 @@ const valueMap = {
     "ász":"asz"
 };
 
-function cardImage(c){
-    return `cards/${suitMap[c.s]}${valueMap[c.v]}.png`;
+
+function kartyakep(c){
+    return `kartyak/${szin[c.s]}${ertek[c.v]}.png`;
 }
+
 
 let deck=[], hands=[[],[]], table=[];
 let current=0;
-let lastAttacker=null;
-let beatActive=false;
+let utsotamado=null;
+let utesvan=false;
 
-function makeDeck(){
+function paklitad(){
     deck=[];
-    suits.forEach(s=>{
-        values.forEach(v=>{
+    szinek.forEach(s=>{
+        ertekek.forEach(v=>{
             deck.push({s,v});
         });
     });
 }
 
-function shuffle(a){
+function kever(a){
     for(let i=a.length-1;i>0;i--){
         const j=Math.floor(Math.random()*(i+1));
         [a[i],a[j]]=[a[j],a[i]];
     }
 }
 
-function deal(){
-    for(let i=0;i<2;i++)
-        while(hands[i].length<4 && deck.length)
-            hands[i].push(deck.pop());
+function oszt(){
+    let turn = 0;
+    while(deck.length && (hands[0].length < 4 || hands[1].length < 4)){
+        if(hands[turn].length < 4){
+            hands[turn].push(deck.pop());
+        }
+        turn = 1 - turn;
+    }
 }
 
-function isSeven(c){ return c.v==="7"; }
-function sameValue(a,b){ return a.v===b.v; }
+function hahetes(c){ return c.v==="7"; }
+function ugyanErtek(a,b){ return a.v===b.v; }
 
-function canBeat(card){
+function tudTovabb(card){
     const last=table[table.length-1];
-    return sameValue(card,last) || isSeven(card);
+    return ugyanErtek(card,last) || hahetes(card);
 }
 
-function play(p,idx){
+function jatszik(p,idx){
     if(p!==current) return;
 
     const card=hands[p].splice(idx,1)[0];
 
-    if(beatActive && !canBeat(card)){
-        takeTable(lastAttacker);
+    if(utesvan && !tudTovabb(card)){
+        felveszAsztal(utsotamado);
         return;
     }
 
     table.push(card);
 
-    if(table.length>=2 && canBeat(card)){
-        lastAttacker=p;
-        beatActive=true;
+    if(table.length>=2 && tudTovabb(card)){
+        utsotamado=p;
+        utesvan=true;
         current=1-p;
     }
     else if(table.length>=2){
-        takeTable(1-p);
+        felveszAsztal(1-p);
         return;
     }
     else{
         current=1-p;
     }
 
-    render();
+    megjelen();
 }
 
-function takeTable(p){
+function felveszAsztal(p){
     table=[];
-    beatActive=false;
-    lastAttacker=null;
-    deal();
+    utesvan=false;
+    utsotamado=null;
+    oszt();
     current=p;
-    render();
+    megjelen();
 }
 
-function cardDiv(c,p,i){
+function kartyaDiv(c,p,i){
     const d=document.createElement("div");
     d.className="card";
 
     const img=document.createElement("img");
-    img.src = cardImage(c);
+    img.src = kartyakep(c);
     img.alt = `${c.s} ${c.v}`;
 
     d.appendChild(img);
 
-    if(p!==undefined) d.onclick=()=>play(p,i);
+    if(p!==undefined) d.onclick=()=>jatszik(p,i);
     return d;
 }
 
-function render(){
+function megjelen(){
     document.getElementById("player").textContent="Játékos "+(current+1);
 
     document.getElementById("table").innerHTML="";
@@ -185,23 +191,22 @@ function render(){
     document.getElementById("hand1").innerHTML="";
 
     table.forEach(c=>{
-        document.getElementById("table").appendChild(cardDiv(c));
+        document.getElementById("table").appendChild(kartyaDiv(c));
     });
 
     hands.forEach((h,p)=>{
         h.forEach((c,i)=>{
-            const d=cardDiv(c,p,i);
+            const d=kartyaDiv(c,p,i);
             if(p!==current) d.classList.add("disabled");
             document.getElementById("hand"+p).appendChild(d);
         });
     });
 }
 
-// start
-makeDeck();
-shuffle(deck);
-deal();
-render();
+paklitad();
+kever(deck);
+oszt();
+megjelen();
 </script>
 
 </body>
