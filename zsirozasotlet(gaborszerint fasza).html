@@ -50,8 +50,7 @@ body {
 
 <body>
 
-<h1>🃏 Zsírozás – továbbütéssel</h1>
-
+<h1>zsirozas - projektmunka</h1>
 <div class="area">
     <b>Aktív játékos:</b> <span id="player"></span>
 </div>
@@ -95,7 +94,7 @@ function kartyakep(c){
 }
 
 
-let deck=[], hands=[[],[]], table=[];
+let deck=[], kezek=[[],[]], table=[];
 let current=0;
 let zsirSzam = 0;
 let utsotamado=null;
@@ -119,9 +118,9 @@ function kever(a){
 
 function oszt(){
     let turn = 0;
-    while(deck.length && (hands[0].length < 4 || hands[1].length < 4)){
-        if(hands[turn].length < 4){
-            hands[turn].push(deck.pop());
+    while(deck.length && (kezek[0].length < 4 || kezek[1].length < 4)){
+        if(kezek[turn].length < 4){
+            kezek[turn].push(deck.pop());
         }
         turn = 1 - turn;
     }
@@ -138,7 +137,7 @@ function tudTovabb(card){
 function jatszik(p,idx){
     if(p!==current) return;
 
-    const card=hands[p].splice(idx,1)[0];
+    const card=kezek[p].splice(idx,1)[0];
 
     if(utesvan && !tudTovabb(card)){
         felveszAsztal(utsotamado);
@@ -197,7 +196,7 @@ function megjelen(){
         document.getElementById("table").appendChild(kartyaDiv(c));
     });
 
-    hands.forEach((h,p)=>{
+    kezek.forEach((h,p)=>{
         h.forEach((c,i)=>{
             const d=kartyaDiv(c,p,i);
             if(p!==current) d.classList.add("disabled");
