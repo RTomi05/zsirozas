@@ -56,11 +56,13 @@ body {
     <b>Aktív játékos:</b> <span id="player"></span>
 </div>
 
-<h3>Asztal</h3>
-<div class="table" id="table"></div>
+
 
 <h3>Játékos 1</h3>
 <div class="hand" id="hand0"></div>
+
+<h3>Asztal</h3>
+<div class="table" id="table"></div>
 
 <h3>Játékos 2</h3>
 <div class="hand" id="hand1"></div>
@@ -95,6 +97,7 @@ function kartyakep(c){
 
 let deck=[], hands=[[],[]], table=[];
 let current=0;
+let zsirSzam = 0;
 let utsotamado=null;
 let utesvan=false;
 
