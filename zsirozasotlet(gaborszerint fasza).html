@@ -32,7 +32,7 @@ body {
 }
 
 .card:hover {
-    border-color:yellow;
+    border: 3px solid blue;
 }
 
 .disabled {
@@ -95,8 +95,8 @@ function kartyakep(c){
 
 
 let deck=[], kezek=[[],[]], table=[];
-let current=0;
-let zsirSzam = 0;
+let aktualis=0;
+//let zsirSzam = 0;
 let utsotamado=null;
 let utesvan=false;
 
@@ -135,7 +135,7 @@ function tudTovabb(card){
 }
 
 function jatszik(p,idx){
-    if(p!==current) return;
+    if(p!==aktualis) return;
 
     const card=kezek[p].splice(idx,1)[0];
 
@@ -149,14 +149,14 @@ function jatszik(p,idx){
     if(table.length>=1 && tudTovabb(card)){
         utsotamado=p;
         utesvan=true;
-        current=1-p;
+        aktualis=1-p;
     }
     else if(table.length>=2){
         felveszAsztal(1-p);
         return;
     }
     else{
-        current=1-p;
+        aktualis=1-p;
     }
 
     megjelen();
@@ -167,7 +167,7 @@ function felveszAsztal(p){
     utesvan=false;
     utsotamado=null;
     oszt();
-    current=p;
+    aktualis=p;
     megjelen();
 }
 
@@ -186,7 +186,7 @@ function kartyaDiv(c,p,i){
 }
 
 function megjelen(){
-    document.getElementById("player").textContent="Játékos "+(current+1);
+    document.getElementById("player").textContent="Játékos "+(aktualis+1);
 
     document.getElementById("table").innerHTML="";
     document.getElementById("hand0").innerHTML="";
@@ -199,7 +199,7 @@ function megjelen(){
     kezek.forEach((h,p)=>{
         h.forEach((c,i)=>{
             const d=kartyaDiv(c,p,i);
-            if(p!==current) d.classList.add("disabled");
+            if(p!==aktualis) d.classList.add("disabled");
             document.getElementById("hand"+p).appendChild(d);
         });
     });
