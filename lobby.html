@@ -20,53 +20,44 @@
     </style>
 
 </head>
-<<<<<<< HEAD
-<body class="bg-dark">
-=======
-<body>
-<!--https://pepa.hu/api/jatekApi/-->
 
->>>>>>> 9f62644ff43c465f9d8f5eee828167da1a5698d2
+<body class="bg-dark">
+
     <div class="container col-lg-12 bg-success">
         <div class="row">
-            <h1 class="text-light">Játék létrehozása</h1>
-            <div class="col-6 input-group md-3">   
-                <label for="nev" class="text-light py-2 m-1">Név:</label>
-                <input type="text" id="nev" class="my-2">
-            </div>
-            <div class="col-lg-6 input-group md-3">
-                <label for="kod" class="text-light py-2 m-1">Kód:</label>
-                <input type="text" id="kod" class="my-2">
-            </div>
-            <div class="col-lg-6 input-group md-3">
-                <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
-                <input type="range" id="jatekosSzam" class="my-2" onmouseup="kiir()" min="1" max="4">
-                <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
-            </div>
-            <div class="col-lg-6 input-group md-3">
-                <button>Játék létrehozása</button>
-            </div>
-
-            <h1 class="text-light">Csatlakozás játékhoz</h1>
-            <div class="col-6 input-group md-3">   
-                <label for="nev" class="text-light py-2 m-1">Név:</label>
-                <input type="text" id="nev" class="my-2">
-            </div>
-            <div class="col-lg-6 input-group md-3">
-                <label for="kod" class="text-light py-2 m-1">Kód:</label>
-                <input type="text" id="kod" class="my-2">
-            </div>
-            <div class="col-lg-6 input-group md-3">
-                <button>Belépés</button>
-            </div>
-            <div class="col-lg-12 py-5">
-                <img src="./magyar-kartya-piros-pia181313-1.jpg-removebg-preview.png" alt="" class="img-fluid mx-auto d-block">
-            </div>
+                <div class="col-lg-6">
+                <h1 class="text-light">Csatlakozás játékhoz</h1>
+                <div class="col-6 input-group md-3">   
+                    <label for="nev" class="text-light py-2 m-1">Név:</label>
+                    <input type="text" id="nev" class="my-2">
+                </div>
+                <div class="col-lg-6 input-group md-3">
+                    <label for="kod" class="text-light py-2 m-1">Kód:</label>
+                    <input type="text" id="kod" class="my-2">
+                </div>
+                <div class="col-lg-6 input-group md-3">
+                    <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
+                    <input type="range" id="jatekosSzam" class="my-2" onmouseup="kiir()" min="1" max="4">
+                    <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
+                </div>
+                <div class="col-lg-6 input-group md-1 mb-4">
+                    <button onclick="kuld()">Belépés</button>
+                    <!--<button onclick="loginGet()">Belépés</button>-->
+                </div>
 
 
 
 
+            </div>
+            <div class="col-lg-6" id="userBlokk">
+                <h1 class="text-light">Lobby</h1>
+                <div class="col-lg-6" id="userek">
+
+                </div>
+
+            </div>
         </div>
+        
 
     </div>
 
@@ -78,23 +69,70 @@
         document.getElementById("jatekosSzamkiir").innerHTML = document.getElementById("jatekosSzam").value
     }
 
-    function kuld()
-    {
+	function kuld()
+	{
+        const userek = document.getElementById("userek");
+		const nev=document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
 
-        fetch("pepa.hu/api/jatekApi/zsirozas/"+$("nev").text()+"")
+		if(nev=="" || kod=="") return;
 
-        /*$.ajax({
-        url: "pepa.hu/api/jatekApi/zsirozas/player",
-        data: {
-        zipcode: 97201
-        },
-        success: function( result ) {
-            $( "#weather-temp" ).html( "<strong>" + result + "</strong> degrees" );
-        }
-        });*/
-    }
+		const maxJatekos=document.getElementById("jatekosSzam").value;
+
+		fetch(`https://pepa.hu/api/jatekApi/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					console.log(data.error);
+				}
+				else
+				{
+                    userList(data.user.players)
+
+				}				
+			});
+	}
+
+    function loginGet()
+	{
+		const nev=document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
+		if(nev=="" || kod=="") return;
+		fetch(`https://pepa.hu/api/jatekApi/zsirozas/lobby/${nev}/${kod}`)
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					document.getElementById("userek").innerHTML=data.error;
+				}
+				else
+				{
+					userList(data.user.players);
+				}				
+			});
+
+        //loginGet()
+	}
+
+    
+    function userList(players)
+	{
+		let userDiv=document.getElementById("userek");
+		userDiv.innerHTML="";
+		players.forEach(p => {
+
+			let blokk=document.createElement("div");
+			blokk.innerHTML =`${p.name} (${p.readyState})`;
+			blokk.innerHTML+=`<button onclick="kick('${p.name}')">kick</button>`;
+			blokk.innerHTML+=`<button onclick="ready('${p.name}')">ready</button>`;
+			userDiv.appendChild(blokk);
+		});
+	}
         
-            
+    setInterval(loginGet(),1000)
 
     </script>
 </body>
