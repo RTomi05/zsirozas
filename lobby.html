@@ -42,7 +42,7 @@
                 </div>
                 <div class="col-lg-6 input-group md-1 mb-4">
                     <button onclick="kuld()">Belépés</button>
-                    <!--<button onclick="loginGet()">Belépés</button>-->
+                    <button onclick="loginGet()">Frissít</button>
                 </div>
 
 
@@ -63,6 +63,8 @@
 
     <script>
 
+        let nev;
+        let upd;
     function kiir()
     {
         
@@ -72,7 +74,7 @@
 	function kuld()
 	{
         const userek = document.getElementById("userek");
-		const nev=document.getElementById("nev").value;
+		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 
 		if(nev=="" || kod=="") return;
@@ -93,11 +95,12 @@
 
 				}				
 			});
+        upd= setInterval(function(){loginGet()},1000)
 	}
 
     function loginGet()
 	{
-		const nev=document.getElementById("nev").value;
+		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 		if(nev=="" || kod=="") return;
 		fetch(`https://pepa.hu/api/jatekApi/zsirozas/lobby/${nev}/${kod}`)
@@ -131,8 +134,13 @@
 			userDiv.appendChild(blokk);
 		});
 	}
-        
-    setInterval(loginGet(),1000)
+    
+
+    function frissit()
+    {
+        setInterval(loginGet(),1000)
+    }
+    
 
     </script>
 </body>
