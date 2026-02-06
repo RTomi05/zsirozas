@@ -62,7 +62,8 @@
     </div>
 
     <script>
-
+        let maxJatekos=document.getElementById("jatekosSzam").value;
+        let playerszam = 0;
         let nev;
         let upd;
     function kiir()
@@ -73,13 +74,13 @@
 
 	function kuld()
 	{
-        const userek = document.getElementById("userek");
+        let userek = document.getElementById("userek");
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 
 		if(nev=="" || kod=="") return;
 
-		const maxJatekos=document.getElementById("jatekosSzam").value;
+		maxJatekos=document.getElementById("jatekosSzam").value;
 
 		fetch(`https://pepa.hu/api/jatekApi/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
 			.then(r=>r.json())
@@ -95,6 +96,8 @@
 
 				}				
 			});
+        playerszam++;
+        console.log(playerszam)
         upd= setInterval(function(){loginGet()},1000)
 	}
 
@@ -116,7 +119,7 @@
 					userList(data.user.players);
 				}				
 			});
-
+        
         //loginGet()
 	}
 
@@ -134,6 +137,49 @@
 			userDiv.appendChild(blokk);
 		});
 	}
+    
+    	
+	function ready(playername)
+	{
+		nev=document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
+
+		fetch(`http://pepa.hu/api/jatekApi/zsirozas/player/${nev}/${kod}`,{method:"PUT",body:JSON.stringify({ name: playername })})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					document.getElementById("userek").innerHTML=data.error;
+				}
+				else
+				{
+					userList(data.user.players);
+				}				
+			});
+	}
+
+    function kick(playername)
+	{
+		const nev=document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
+
+		fetch(`https://pepa.hu/api/jatekApi/zsirozas/player/${nev}/${kod}`,{method:"DELETE",body:JSON.stringify({ name: playername })})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null && playerszam < maxJatekos)
+				{
+					document.getElementById("userek").innerHTML=data.error;
+				}
+				else
+				{
+					userList(data.user.players);
+				}
+            
+			});
+	}
+
     
 
     function frissit()
