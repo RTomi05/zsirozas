@@ -1,288 +1,221 @@
- <!DOCTYPE html>
- <html lang="hu">
- <head>
- <meta charset="UTF-8">
- <title>Zsírozás – valódi lapokkal</title>
- 
- <style>
- body {
-     background:#063;
-     font-family: Arial;
-     color:white;
- }
- 
- .hand, .table {
-     display:flex;
-     gap:10px;
-     margin:10px 0;
- }
- 
- .card {
-     width:256px;
-     height:341px;
-     border-radius:10px;
-     cursor:pointer;
-     border:2px solid transparent;
- }
- 
- .card img {
-     width:100%;
-     height:100%;
-     border-radius:10px;
- }
- 
- .card:hover {
-     border: 3px solid blue;
- }
- 
- .disabled {
-     opacity:0.4;
-     pointer-events:none;
- }
- 
- .area {
-     background:#0005;
-     padding:10px;
-     border-radius:8px;
- }
- </style>
- </head>
- 
- <body>
- 
- <h1>Zsírozás - Projektmunka</h1>
- <div class="area">
-     <b>Aktív játékos:</b> <span id="player"></span>
- </div>
- 
- 
- 
- <h3>Játékos 1</h3>
- <div class="hand" id="hand0"></div>
- 
- <h3>Asztal</h3>
- <div class="table" id="table"></div>
- 
- <h3>Játékos 2</h3>
- <div class="hand" id="hand1"></div>
- 
- <script>
- const szinek = ["zöld","szív","tök","makk"];
- const ertekek = ["7","8","9","10","alsó","felső","király","ász"];
- 
- const szin = {
-     "zöld": "level",
-     "szív": "sziv",
-     "tök": "tok",
-     "makk": "makk"
- };
- 
- const ertek = {
-     "7":"7",
-     "8":"8",
-     "9":"9",
-     "10":"10",
-     "alsó":"also",
-     "felső":"felso",
-     "király":"kiraly",
-     "ász":"asz"
- };
- 
- function kartyakep(c){
-     return `kartyak/${szin[c.s]}${ertek[c.v]}.png`;
- }
- 
-let deck=[], kezek=[], table=[];
-let playerCount = 2;
- let aktualis=0;
- let utsotamado=null;
- let utesvan=false;
-let passed = [];
- 
- function paklitad(){
-     deck=[];
-     szinek.forEach(s=>{
-         ertekek.forEach(v=>{
-             deck.push({s,v});
-         });
-     });
- }
- 
- function kever(a){
-     for(let i=a.length-1;i>0;i--){
-         const j=Math.floor(Math.random()*(i+1));
-         [a[i],a[j]]=[a[j],a[i]];
-     }
- }
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Zsírozás</title>
 
-function initHands(){
-    kezek = Array.from({length:playerCount}, ()=>[]);
-    passed = Array.from({length:playerCount}, ()=>false);
+<style>
+body {
+    background:#063;
+    font-family: Arial;
+    color:white;
 }
- 
- function oszt(){
-    // oszt, amíg van pakli és valamelyik játékosnak kevesebb mint 4 lapja van
-     let turn = 0;
-    while(deck.length && kezek.some(h=>h.length < 4)){
-         if(kezek[turn].length < 4){
-             kezek[turn].push(deck.pop());
-         }
-        turn = (turn + 1) % playerCount;
-     }
- }
- 
- function hahetes(c){ return c.v==="7"; }
-function ugyanErtek(a,b){ return b && a.v===b.v; }
- 
- function tudTovabb(card){
-     const last=table[table.length-1];
-    return last && ( ugyanErtek(card,last) || hahetes(card));
- }
- 
- function jatszik(p,idx){
-     if(p!==aktualis) return;
- 
-     const card=kezek[p].splice(idx,1)[0];
 
-    // játékos játéka után töröljük a passzokat
-    passed.fill(false);
- 
-     if(utesvan && !tudTovabb(card)){
-         felveszAsztal(utsotamado);
-         return;
-     }
- 
-     table.push(card);
- 
-    if(tudTovabb(card)){
-         utsotamado=p;
-         utesvan=true;
-        aktualis=(p+1)%playerCount;
-     }
-     else if(table.length>=2){
-        const prev = (p - 1 + playerCount) % playerCount;
-        felveszAsztal(prev);
-         return;
-     }
-     else{
-        aktualis=(p+1)%playerCount;
-     }
- 
-     megjelen();
- }
+.hand, .table {
+    display:flex;
+    gap:10px;
+    margin:10px 0;
+}
 
-function pass(p){
-    if(p!==aktualis) return;
-    passed[p]=true;
+.card {
+    width:256px;
+    height:341px;
+    border-radius:10px;
+    cursor:pointer;
+    border:2px solid transparent;
+}
 
-    // ha mindenki passzolt és még senki sem "viszi" a leosztást, extra kör (új osztás)
-    if(passed.every(x=>x) && utsotamado===null){
-        oszt();
-        passed.fill(false);
-        // aktuális marad ugyanaz (új kártyákkal folytathatja)
-    } else {
-        // továbblépés a következő játékosra
-        aktualis=(aktualis+1)%playerCount;
+.card img {
+    width:100%;
+    height:100%;
+    border-radius:10px;
+}
+
+.card:hover {
+    border: 3px solid blue;
+}
+
+.disabled {
+    opacity:0.4;
+    pointer-events:none;
+}
+
+.area {
+    background:#0005;
+    padding:10px;
+    border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Zsírozás - Projektmunka</h1>
+<div class="area">
+    <b>Aktív játékos:</b> <span id="player"></span>
+</div>
+
+
+
+<h3>Játékos 1</h3>
+<div class="hand" id="hand0"></div>
+
+<h3>Asztal</h3>
+<div class="table" id="table"></div>
+
+<h3>Játékos 2</h3>
+<div class="hand" id="hand1"></div>
+
+<script>
+const szinek = ["zöld","szív","tök","makk"];
+const ertekek = ["7","8","9","10","alsó","felső","király","ász"];
+
+const szin = {
+    "zöld": "level",
+    "szív": "sziv",
+    "tök": "tok",
+    "makk": "makk"
+};
+
+const ertek = {
+    "7":"7",
+    "8":"8",
+    "9":"9",
+    "10":"10",
+    "alsó":"also",
+    "felső":"felso",
+    "király":"kiraly",
+    "ász":"asz"
+};
+
+
+function kartyakep(c){
+    return `kartyak/${szin[c.s]}${ertek[c.v]}.png`;
+}
+
+
+let deck=[], kezek=[[],[]], table=[];
+let aktualis=0;
+//let zsirSzam = 0;
+let utsotamado=null;
+let utesvan=false;
+
+function paklitad(){
+    deck=[];
+    szinek.forEach(s=>{
+        ertekek.forEach(v=>{
+            deck.push({s,v});
+        });
+    });
+}
+
+function kever(a){
+    for(let i=a.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
     }
+}
+
+function oszt(){
+    let turn = 0;
+    while(deck.length && (kezek[0].length < 4 || kezek[1].length < 4)){
+        if(kezek[turn].length < 4){
+            kezek[turn].push(deck.pop());
+        }
+        turn = 1 - turn;
+    }
+}
+
+function hahetes(c){ return c.v==="7"; }
+function ugyanErtek(a,b){ return a.v===b.v; }
+
+function tudTovabb(card){
+    const last=table[table.length-1];
+    return ugyanErtek(card,last) || hahetes(card);
+}
+
+function jatszik(p,idx){
+    if(p!==aktualis) return;
+
+    const card=kezek[p].splice(idx,1)[0];
+
+    if(utesvan && !tudTovabb(card)){
+        felveszAsztal(utsotamado);
+        return;
+    }
+    /*
+    else if(utesvan && tudTovabb(card) && table.length<2){
+        utsotamado=p;
+        console.log("Három lap van az asztalon, de még mindig lehet folytatni.");
+
+    }*/
+
+    table.push(card);
+
+    if(table.length>=1 && tudTovabb(card)){
+        utsotamado=p;
+        utesvan=true;
+        aktualis=1-p;
+    }
+    else if(table.length>=2){
+        felveszAsztal(1-p);
+        return;
+    }
+    else{
+        aktualis=1-p;
+    }
+
     megjelen();
 }
- 
- function felveszAsztal(p){
-     table=[];
-     utesvan=false;
-     utsotamado=null;
-     oszt();
-    passed.fill(false);
-     aktualis=p;
-     megjelen();
- }
- 
- function kartyaDiv(c,p,i){
-     const d=document.createElement("div");
-     d.className="card";
- 
-     const img=document.createElement("img");
-     img.src = kartyakep(c);
-     img.alt = `${c.s} ${c.v}`;
- 
-     d.appendChild(img);
- 
-     if(p!==undefined) d.onclick=()=>jatszik(p,i);
-     return d;
- }
 
-function setupPlayersUI(){
-    const container = document.getElementById('playersContainer');
-    container.innerHTML = '';
-    for(let p=0;p<playerCount;p++){
-        const h3 = document.createElement('h3');
-        h3.id = 'playerTitle'+p;
-        h3.textContent = 'Játékos '+(p+1);
-        const handDiv = document.createElement('div');
-        handDiv.className='hand';
-        handDiv.id = 'hand'+p;
-        container.appendChild(h3);
-        container.appendChild(handDiv);
-    }
-    document.getElementById('passBtn').onclick = ()=>pass(aktualis);
+function felveszAsztal(p){
+    table=[];
+    utesvan=false;
+    utsotamado=null;
+    oszt();
+    aktualis=p;
+    megjelen();
 }
- 
- function megjelen(){
-     document.getElementById("player").textContent="Játékos "+(aktualis+1);
- 
-     document.getElementById("table").innerHTML="";
-    for(let p=0;p<playerCount;p++){
-        const h = document.getElementById('hand'+p);
-        if(h) h.innerHTML='';
-    }
- 
-     table.forEach(c=>{
-         document.getElementById("table").appendChild(kartyaDiv(c));
-     });
- 
-     kezek.forEach((h,p)=>{
-        const hand = document.getElementById('hand'+p);
-        if(!hand) return;
-         h.forEach((c,i)=>{
-             const d=kartyaDiv(c,p,i);
-             if(p!==aktualis) d.classList.add("disabled");
-            hand.appendChild(d);
-        });
-        const title = document.getElementById('playerTitle'+p);
-        if(passed[p]) title.textContent = 'Játékos '+(p+1)+' (passz)';
-        else title.textContent = 'Játékos '+(p+1);
+
+function kartyaDiv(c,p,i){
+    const d=document.createElement("div");
+    d.className="card";
+
+    const img=document.createElement("img");
+    img.src = kartyakep(c);
+    img.alt = `${c.s} ${c.v}`;
+
+    d.appendChild(img);
+
+    if(p!==undefined) d.onclick=()=>jatszik(p,i);
+    return d;
+}
+
+function megjelen(){
+    document.getElementById("player").textContent="Játékos "+(aktualis+1);
+
+    document.getElementById("table").innerHTML="";
+    document.getElementById("hand0").innerHTML="";
+    document.getElementById("hand1").innerHTML="";
+
+    table.forEach(c=>{
+        document.getElementById("table").appendChild(kartyaDiv(c));
     });
 
-    // passz gomb engedélyezése csak az aktuális játékosnak
-    const passBtn = document.getElementById('passBtn');
-    passBtn.disabled = false; // egyszerű: mindig engedélyezzük, csak a logika tiltja ha nem aktuális
+    kezek.forEach((h,p)=>{
+        h.forEach((c,i)=>{
+            const d=kartyaDiv(c,p,i);
+            if(p!==aktualis) d.classList.add("disabled");
+            document.getElementById("hand"+p).appendChild(d);
+        });
+    });
 }
 
-function newGame(){
-    playerCount = parseInt(document.getElementById('playersCount').value,10) || 2;
-    initHands();
-    paklitad();
-    kever(deck);
-    oszt();
-    table=[];
-    utsotamado=null;
-    utesvan=false;
-    aktualis=0;
-    setupPlayersUI();
-    megjelen();
- }
- 
-// inicializálás
-setupPlayersUI();
-initHands();
- paklitad();
- kever(deck);
- oszt();
- megjelen();
-
-// vezérlők
-document.getElementById('newGame').onclick = newGame;
- </script>
+paklitad();
+kever(deck);
+oszt();
+megjelen();
+</script>
 
 </body>
 </html>
