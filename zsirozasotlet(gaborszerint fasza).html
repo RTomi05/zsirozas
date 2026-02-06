@@ -2,7 +2,7 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<title>Zsírozás – valódi lapokkal</title>
+<title>Zsírozás</title>
 
 <style>
 body {
@@ -53,6 +53,7 @@ body {
 <h1>Zsírozás - Projektmunka</h1>
 <div class="area">
     <b>Aktív játékos:</b> <span id="player"></span>
+    <button id="passBtn" onclick="passz()" disabled style="margin-left:10px">Passz</button>
 </div>
 
 
@@ -130,36 +131,46 @@ function hahetes(c){ return c.v==="7"; }
 function ugyanErtek(a,b){ return a.v===b.v; }
 
 function tudTovabb(card){
-    const last=table[table.length-1];
+    const last = table[table.length-1];
+    if(!last) return false;
     return ugyanErtek(card,last) || hahetes(card);
 }
 
 function jatszik(p,idx){
     if(p!==aktualis) return;
 
-    const card=kezek[p].splice(idx,1)[0];
+    const card = kezek[p].splice(idx,1)[0];
 
-    if(utesvan && !tudTovabb(card)){
+    // ellenőrizzük a korábbi (push előtti) állapotot
+    const prev = table.length ? table[table.length-1] : null;
+    const canContinue = prev && (ugyanErtek(card, prev) || hahetes(card));
+
+    if(utesvan && !canContinue){
+        // védekező felveszi az asztalt
         felveszAsztal(utsotamado);
         return;
     }
 
     table.push(card);
 
-    if(table.length>=1 && tudTovabb(card)){
-        utsotamado=p;
-        utesvan=true;
-        aktualis=1-p;
+    if(canContinue){
+        utsotamado = p;
+        utesvan = true;
+        aktualis = 1 - p;
     }
-    else if(table.length>=2){
+    else if(table.length >= 2){
         felveszAsztal(1-p);
         return;
     }
     else{
-        aktualis=1-p;
+        aktualis = 1 - p;
     }
 
     megjelen();
+    if(deck.length === 0){
+        // ha elfogyott a pakli, akkor vége a játéknak
+        alert("A játék véget ért!");
+    }
 }
 
 function felveszAsztal(p){
@@ -185,6 +196,13 @@ function kartyaDiv(c,p,i){
     return d;
 }
 
+function passz(){
+    // csak ha támadás van és az aktuális nem a támadó
+    if(!utesvan) return;
+    if(aktualis === utsotamado) return;
+    felveszAsztal(utsotamado);
+}
+
 function megjelen(){
     document.getElementById("player").textContent="Játékos "+(aktualis+1);
 
@@ -203,6 +221,10 @@ function megjelen(){
             document.getElementById("hand"+p).appendChild(d);
         });
     });
+
+    // passz gomb kezelése: csak védekezőnél engedélyezett, ha támadás van
+    const passBtn = document.getElementById("passBtn");
+    passBtn.disabled = !(utesvan && utsotamado!==null && aktualis !== utsotamado);
 }
 
 paklitad();
