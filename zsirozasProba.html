@@ -54,9 +54,9 @@ body {
 <h1>HA HÜLYESÉGET RAKSZ, ELROMLIK</h1>
 <div class="area">
     <b>Aktív játékos:</b> <span id="player"></span>
+    <button id="passBtn" onclick="passz()" disabled style="margin-left:10px">Passz</button>
+    <div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/80)</div>
 </div>
-
-
 
 <h3>Játékos 1</h3>
 <div class="hand" id="hand0"></div>
@@ -101,6 +101,10 @@ let aktualis=0;
 let utsotamado=null;
 let utesvan=false;
 
+// új pontszámlálók és limit
+let pontok = [0,0];
+const MAX_PONTOK = 8;
+
 function paklitad(){
     deck=[];
     szinek.forEach(s=>{
@@ -131,45 +135,57 @@ function hahetes(c){ return c.v==="7"; }
 function ugyanErtek(a,b){ return a.v===b.v; }
 
 function tudTovabb(card){
-    const last=table[table.length-1];
+    const last = table[table.length-1];
+    if(!last) return false;
     return ugyanErtek(card,last) || hahetes(card);
 }
 
 function jatszik(p,idx){
     if(p!==aktualis) return;
 
-    const card=kezek[p].splice(idx,1)[0];
+    const card = kezek[p].splice(idx,1)[0];
 
-    if(utesvan && !tudTovabb(card)){
+    // ellenőrizzük a korábbi (push előtti) állapotot
+    const prev = table.length ? table[table.length-1] : null;
+    const canContinue = prev && (ugyanErtek(card, prev) || hahetes(card));
+
+    if(utesvan && !canContinue){
+        // védekező felveszi az asztalt
         felveszAsztal(utsotamado);
         return;
     }
-    /*
-    else if(utesvan && tudTovabb(card) && table.length<2){
-        utsotamado=p;
-        console.log("Három lap van az asztalon, de még mindig lehet folytatni.");
-
-    }*/
 
     table.push(card);
 
-    if(table.length>=1 && tudTovabb(card)){
-        utsotamado=p;
-        utesvan=true;
-        aktualis=1-p;
+    if(canContinue){
+        utsotamado = p;
+        utesvan = true;
+        aktualis = 1 - p;
     }
-    else if(table.length>=2){
+    else if(table.length >= 2){
         felveszAsztal(1-p);
         return;
     }
     else{
-        aktualis=1-p;
+        aktualis = 1 - p;
     }
 
     megjelen();
+    //Rossz még
+    /*
+    if((deck.length === 0 && table.length === 0) || (deck.length === 0 && table.length === 1) || (deck.length === 0 && table.length === 0)){
+        alert("A játék véget ért!");
+    }
+        */
 }
 
 function felveszAsztal(p){
+    const count = table.reduce((acc, c) => acc + ((c.v === "10" || c.v === "ász") ? 1 : 0), 0);
+    const ossz = pontok[0] + pontok[1];
+    const maradek = Math.max(0, MAX_PONTOK - ossz);
+    const hozzajaro = Math.min(count, maradek);
+    if(hozzajaro > 0) pontok[p] += hozzajaro;
+
     table=[];
     utesvan=false;
     utsotamado=null;
@@ -192,6 +208,12 @@ function kartyaDiv(c,p,i){
     return d;
 }
 
+function passz(){
+    if(!utesvan) return;
+    if(aktualis === utsotamado) return;
+    felveszAsztal(utsotamado);
+}
+
 function megjelen(){
     document.getElementById("player").textContent="Játékos "+(aktualis+1);
 
@@ -210,6 +232,17 @@ function megjelen(){
             document.getElementById("hand"+p).appendChild(d);
         });
     });
+
+    
+    const scoresEl = document.getElementById("scores");
+    if(scoresEl){
+        const total = pontok[0] + pontok[1];
+        scoresEl.textContent = `J1: ${pontok[0]} — J2: ${pontok[1]} (Összesen: ${total}/${MAX_PONTOK})`;
+    }
+
+    // passz gomb kezelése: csak védekezőnél engedélyezett, ha támadás van
+    const passBtn = document.getElementById("passBtn");
+    passBtn.disabled = !(utesvan && utsotamado!==null && aktualis !== utsotamado);
 }
 
 paklitad();
