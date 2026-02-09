@@ -54,7 +54,8 @@ body {
 <h1>HA HÜLYESÉGET RAKSZ, ELROMLIK</h1>
 <div class="area">
     <b>Aktív játékos:</b> <span id="player"></span>
-    <button id="passBtn" onclick="passz()" disabled style="margin-left:10px">Passz</button>
+    <!--<button id="passBtn" onclick="passz()" disabled style="margin-left:10px">Passz</button>-->
+    <div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/80)</div>
 </div>
 
 
@@ -100,7 +101,13 @@ let deck=[], kezek=[[],[]], table=[];
 let aktualis=0;
 let utsotamado=null;
 let utesvan=false;
+const MAX_PONTOK = 8;
+let pontok = [0,0];
 
+function kartyaPont(c){
+    if(c.v === "10" || c.v === "ász") return 1;
+    return 0;
+}
 
 function paklitad(){
     deck=[];
@@ -140,29 +147,35 @@ function tudTovabb(card){
 }
 
 function jatszik(p,idx){
-    // csak az aktuális játékos léphet
     if (p !== aktualis) return;
 
     const last = table.length ? table[table.length-1] : null;
 
-    // első kártya az asztalon: bármilyen kártya letehető
     if (table.length === 0) {
-        // semmi extra ellenőrzés
+        // első lap: bármit le lehet tenni
     }
     else if (utesvan) {
-        // ha támadás van: ellenőrizzük, hogy a játékosnak van-e folytató lapja (ugyanolyan érték vagy hét)
         const hasValid = kezek[p].some(c => last && (ugyanErtek(c,last) || hahetes(c)));
         const chosen = kezek[p][idx];
 
         if (!hasValid) {
-            // kötelező passz (védekező felveszi az asztalt) — csak ha nem a támadó
             if (utsotamado !== null && p !== utsotamado) {
-                alert("Nincs ugyanolyan vagy hetes lapod — kötelező passz, felveszed az asztalt.");
+
+                kezek[p].splice(idx,1);
+                megjelen();
                 felveszAsztal(utsotamado);
                 return;
             }
         } else {
-            // van folytató lapja — a lerakott lapnak folytatnia kell a támadást
+           
+            if(kezek[0].length === kezek[1].length && !(hahetes(chosen) || (last && ugyanErtek(chosen,last)))){
+                kezek[p].splice(idx,1); // csak egyszer távolítjuk el
+                megjelen();
+               
+                felveszAsztal(utsotamado !== null ? utsotamado : (1-p));
+                return;
+            }
+
             if (!(last && (ugyanErtek(chosen,last) || hahetes(chosen)))) {
                 alert("Válassz ugyanolyan értékű lapot vagy hetest!");
                 return;
@@ -170,18 +183,16 @@ function jatszik(p,idx){
         }
     }
     else {
-        // nincs támadás: az asztalon már lévő kártya után is bármit le lehet tenni (a felhasználói kérés szerint)
+        // nincs támadás: az asztalon már lévő kártya után is bármit le lehet tenni
     }
 
-    const card = kezek[p].splice(idx,1)[0];
 
-    // ellenőrizzük a korábbi (push előtti) állapotot
+    const card = kezek[p].splice(idx,1)[0];
     const prev = table.length ? table[table.length-1] : null;
     const canContinue = prev && (ugyanErtek(card, prev) || hahetes(card));
     
     if(utesvan && !canContinue){
-        // védekező felveszi az asztalt
-        
+
         felveszAsztal(utsotamado);
         return;
     }
@@ -194,27 +205,70 @@ function jatszik(p,idx){
         aktualis = 1 - p;
     }
     else if(table.length >= 2){
+
         felveszAsztal(1-p);
         return;
     }
     else{
         aktualis = 1 - p;
     }
+
+    
+    if(utesvan){
+        const next = aktualis;
+        const lastOnTable = table.length ? table[table.length-1] : null;
+        const nextHasValid = kezek[next].some(c => lastOnTable && (ugyanErtek(c,lastOnTable) || hahetes(c)));
+        if(!nextHasValid){
+         
+            felveszAsztal(utsotamado !== null ? utsotamado : (1-next));
+            return;
+        }
+    }
     
     megjelen();
-    if(deck.length === 0){
-        // ha elfogyott a pakli, akkor vége a játéknak
-        alert("A játék véget ért!");
-    }
+    checkEnd();
 }
 
 function felveszAsztal(p){
+    const diff = kezek[0].length - kezek[1].length;
+    if(diff > 0){
+        let toMove = Math.min(diff, kezek[0].length);
+        for(let i=0;i<toMove;i++){
+            table.push(kezek[0].shift());
+        }
+    } else if(diff < 0){
+        let toMove = Math.min(-diff, kezek[1].length);
+        for(let i=0;i<toMove;i++){
+            table.push(kezek[1].shift());
+        }
+    }
+
+    if(table.length){
+        const sum = table.reduce((s,c)=> s + kartyaPont(c), 0);
+        pontok[p] += sum;
+    }
+    
     table=[];
     utesvan=false;
     utsotamado=null;
     oszt();
     aktualis=p;
     megjelen();
+
+    checkEnd();
+}
+
+function checkEnd(){
+    if(deck.length === 0 && kezek[0].length === 0 && kezek[1].length === 0){
+        const winner = pontok[0] > pontok[1] ? 1 : (pontok[1] > pontok[0] ? 2 : 0);
+        if(winner === 0){
+            alert(`A játék véget ért! Döntetlen: J1 ${pontok[0]} — J2 ${pontok[1]}`);
+        } else {
+            alert(`A játék véget ért! Győztes: Játékos ${winner} — J1: ${pontok[0]} — J2: ${pontok[1]}`);
+        }
+        document.querySelectorAll('.hand .card').forEach(c=>c.classList.add('disabled'));
+        document.getElementById("passBtn").disabled = true;
+    }
 }
 
 function kartyaDiv(c,p,i){
@@ -232,7 +286,6 @@ function kartyaDiv(c,p,i){
 }
 
 function passz(){
-    // csak ha támadás van és az aktuális nem a támadó
     if(!utesvan) return;
     if(aktualis === utsotamado) return;
     felveszAsztal(utsotamado);
@@ -256,10 +309,14 @@ function megjelen(){
             document.getElementById("hand"+p).appendChild(d);
         });
     });
+     const scoresEl = document.getElementById("scores");
+    if(scoresEl){
+        const total = pontok[0] + pontok[1];
+        scoresEl.textContent = `J1: ${pontok[0]} — J2: ${pontok[1]} (Összesen: ${total}/${MAX_PONTOK})`;
+    }
 
-    // passz gomb kezelése: csak védekezőnél engedélyezett, ha támadás van
     const passBtn = document.getElementById("passBtn");
-    passBtn.disabled = !(utesvan && utsotamado!==null && aktualis !== utsotamado);
+    if(passBtn) passBtn.disabled = !(utesvan && utsotamado!==null && aktualis !== utsotamado);
 }
 
 paklitad();
