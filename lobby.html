@@ -44,6 +44,8 @@
                     <button onclick="kuld()">Belépés</button>
                     <button onclick="loginGet()">Frissít</button>
                 </div>
+				<div class="col-lg-6 input-group md-1 mb-4" id="inditas">
+                </div>
 
 
 
@@ -64,11 +66,14 @@
     <script>
         let maxJatekos=document.getElementById("jatekosSzam").value;
         let playerszam = 0;
+		let readyszam = 0;
         let nev;
         let upd;
+
+		let inditas = document.getElementById("inditas")
+
     function kiir()
     {
-        
         document.getElementById("jatekosSzamkiir").innerHTML = document.getElementById("jatekosSzam").value
     }
 
@@ -98,7 +103,7 @@
 			});
         playerszam++;
         console.log(playerszam)
-        upd= setInterval(function(){loginGet()},1000)
+        upd= setInterval(function(){loginGet()},2000)
 	}
 
     function loginGet()
@@ -157,6 +162,10 @@
 					userList(data.user.players);
 				}				
 			});
+		
+		readyszam++;
+		
+		let frissites = setInterval(function(){vizsgal()},2000)
 	}
 
     function kick(playername)
@@ -180,13 +189,26 @@
 			});
 	}
 
-    
-
     function frissit()
     {
         setInterval(loginGet(),1000)
     }
+
+
+	function vizsgal()
+	{
+		if(readyszam >= maxJatekos)
+		{
+			inditas.innerHTML = "";
+			let gomb = document.createElement("button")
+			gomb.onclick = "./zsirozasotlet(gaborszerint fasza).html"
+			inditas.appendChild(gomb)
+		}
+		console.log(readyszam)
+	}
     
+
+
 
     </script>
 </body>
