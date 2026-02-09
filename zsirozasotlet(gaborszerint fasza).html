@@ -98,9 +98,9 @@ function kartyakep(c){
 
 let deck=[], kezek=[[],[]], table=[];
 let aktualis=0;
-//let zsirSzam = 0;
 let utsotamado=null;
 let utesvan=false;
+
 
 function paklitad(){
     deck=[];
@@ -120,9 +120,11 @@ function kever(a){
 
 function oszt(){
     let turn = 0;
+
     while(deck.length && (kezek[0].length < 4 || kezek[1].length < 4)){
-        if(kezek[turn].length < 4){
-            kezek[turn].push(deck.pop());
+        if(kezek[0].length > kezek[1].length) kezek[1].push(deck.pop());
+        if(kezek[turn].length < 4){ 
+                kezek[turn].push(deck.pop());
         }
         turn = 1 - turn;
     }
@@ -138,16 +140,48 @@ function tudTovabb(card){
 }
 
 function jatszik(p,idx){
-    if(p!==aktualis) return;
+    // csak az aktuális játékos léphet
+    if (p !== aktualis) return;
+
+    const last = table.length ? table[table.length-1] : null;
+
+    // első kártya az asztalon: bármilyen kártya letehető
+    if (table.length === 0) {
+        // semmi extra ellenőrzés
+    }
+    else if (utesvan) {
+        // ha támadás van: ellenőrizzük, hogy a játékosnak van-e folytató lapja (ugyanolyan érték vagy hét)
+        const hasValid = kezek[p].some(c => last && (ugyanErtek(c,last) || hahetes(c)));
+        const chosen = kezek[p][idx];
+
+        if (!hasValid) {
+            // kötelező passz (védekező felveszi az asztalt) — csak ha nem a támadó
+            if (utsotamado !== null && p !== utsotamado) {
+                alert("Nincs ugyanolyan vagy hetes lapod — kötelező passz, felveszed az asztalt.");
+                felveszAsztal(utsotamado);
+                return;
+            }
+        } else {
+            // van folytató lapja — a lerakott lapnak folytatnia kell a támadást
+            if (!(last && (ugyanErtek(chosen,last) || hahetes(chosen)))) {
+                alert("Válassz ugyanolyan értékű lapot vagy hetest!");
+                return;
+            }
+        }
+    }
+    else {
+        // nincs támadás: az asztalon már lévő kártya után is bármit le lehet tenni (a felhasználói kérés szerint)
+    }
 
     const card = kezek[p].splice(idx,1)[0];
 
     // ellenőrizzük a korábbi (push előtti) állapotot
     const prev = table.length ? table[table.length-1] : null;
     const canContinue = prev && (ugyanErtek(card, prev) || hahetes(card));
-
+    
     if(utesvan && !canContinue){
         // védekező felveszi az asztalt
+        
         felveszAsztal(utsotamado);
         return;
     }
@@ -166,7 +200,7 @@ function jatszik(p,idx){
     else{
         aktualis = 1 - p;
     }
-
+    
     megjelen();
     if(deck.length === 0){
         // ha elfogyott a pakli, akkor vége a játéknak
