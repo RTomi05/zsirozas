@@ -55,7 +55,7 @@ body {
 <div class="area">
     <b>Aktív játékos:</b> <span id="player"></span>
     <button id="passBtn" onclick="passz()" disabled style="margin-left:10px">Passz</button>
-    <div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/80)</div>
+    <!--<div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/80)</div>-->
 </div>
 
 <h3>Játékos 1</h3>
@@ -97,11 +97,9 @@ function kartyakep(c){
 
 let deck=[], kezek=[[],[]], table=[];
 let aktualis=0;
-//let zsirSzam = 0;
 let utsotamado=null;
 let utesvan=false;
 
-// új pontszámlálók és limit
 let pontok = [0,0];
 const MAX_PONTOK = 8;
 
@@ -145,12 +143,10 @@ function jatszik(p,idx){
 
     const card = kezek[p].splice(idx,1)[0];
 
-    // ellenőrizzük a korábbi (push előtti) állapotot
     const prev = table.length ? table[table.length-1] : null;
     const canContinue = prev && (ugyanErtek(card, prev) || hahetes(card));
 
     if(utesvan && !canContinue){
-        // védekező felveszi az asztalt
         felveszAsztal(utsotamado);
         return;
     }
@@ -179,12 +175,14 @@ function jatszik(p,idx){
         */
 }
 
+/*
 function felveszAsztal(p){
     const count = table.reduce((acc, c) => acc + ((c.v === "10" || c.v === "ász") ? 1 : 0), 0);
     const ossz = pontok[0] + pontok[1];
     const maradek = Math.max(0, MAX_PONTOK - ossz);
     const hozzajaro = Math.min(count, maradek);
     if(hozzajaro > 0) pontok[p] += hozzajaro;
+    */
 
     table=[];
     utesvan=false;
@@ -233,14 +231,14 @@ function megjelen(){
         });
     });
 
-    
+    /*
     const scoresEl = document.getElementById("scores");
     if(scoresEl){
         const total = pontok[0] + pontok[1];
         scoresEl.textContent = `J1: ${pontok[0]} — J2: ${pontok[1]} (Összesen: ${total}/${MAX_PONTOK})`;
     }
+        */
 
-    // passz gomb kezelése: csak védekezőnél engedélyezett, ha támadás van
     const passBtn = document.getElementById("passBtn");
     passBtn.disabled = !(utesvan && utsotamado!==null && aktualis !== utsotamado);
 }
