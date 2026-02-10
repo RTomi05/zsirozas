@@ -176,10 +176,12 @@ function jatszik(p,idx){
                 return;
             }
 
+            /*
             if (!(last && (ugyanErtek(chosen,last) || hahetes(chosen)))) {
                 alert("Válassz ugyanolyan értékű lapot vagy hetest!");
                 return;
             }
+                */
         }
     }
     else {
@@ -231,7 +233,7 @@ function jatszik(p,idx){
 
 function felveszAsztal(p){
     const diff = kezek[0].length - kezek[1].length;
-    if(diff > 0){
+        if(diff > 0){
         let toMove = Math.min(diff, kezek[0].length);
         for(let i=0;i<toMove;i++){
             table.push(kezek[0].shift());
@@ -248,7 +250,7 @@ function felveszAsztal(p){
         pontok[p] += sum;
     }
     
-    table=[];
+        table=[];
     utesvan=false;
     utsotamado=null;
     oszt();
@@ -286,7 +288,8 @@ function kartyaDiv(c,p,i){
 }
 
 function passz(){
-    if(!utesvan) return;
+    if(!utesvan)
+    {return;};
     if(aktualis === utsotamado) return;
     felveszAsztal(utsotamado);
 }
