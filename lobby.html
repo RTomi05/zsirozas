@@ -64,6 +64,7 @@
     </div>
 
     <script>
+		let jatekosok = [];
         let maxJatekos=document.getElementById("jatekosSzam").value;
         let playerszam = 0;
 		let readyszam = 0;
@@ -75,10 +76,13 @@
     function kiir()
     {
         document.getElementById("jatekosSzamkiir").innerHTML = document.getElementById("jatekosSzam").value
+
+
     }
 
 	function kuld()
 	{
+		inditas.innerHTML = "";
         let userek = document.getElementById("userek");
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
@@ -104,10 +108,19 @@
         playerszam++;
         console.log(playerszam)
         upd= setInterval(function(){loginGet()},2000)
+
+		if(isHost(jatekosok,nev))
+		{
+
+			let gomb = document.createElement("button")
+			gomb.textContent = "Indítás"
+			inditas.appendChild(gomb)
+		}
 	}
 
     function loginGet()
 	{
+		inditas = "";
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 		if(nev=="" || kod=="") return;
@@ -125,12 +138,20 @@
 				}				
 			});
         
+			if(isHost(jatekosok,nev))
+			{
+
+				let gomb = document.createElement("button")
+				gomb.textContent = "Indítás"
+				inditas.appendChild(gomb)
+			}
         //loginGet()
 	}
 
     
     function userList(players)
 	{
+		jatekosok = [];
 		let userDiv=document.getElementById("userek");
 		userDiv.innerHTML="";
 		players.forEach(p => {
@@ -140,7 +161,16 @@
 			blokk.innerHTML+=`<button onclick="kick('${p.name}')">kick</button>`;
 			blokk.innerHTML+=`<button onclick="ready('${p.name}')">ready</button>`;
 			userDiv.appendChild(blokk);
+
+			if(!jatekosok.includes(p))
+			{
+				jatekosok.push(p);
+			}
+			
 		});
+
+		console.log(jatekosok)
+
 	}
     
     	
@@ -163,9 +193,9 @@
 				}				
 			});
 		
-		readyszam++;
+
 		
-		let frissites = setInterval(function(){vizsgal()},2000)
+		
 	}
 
     function kick(playername)
@@ -194,19 +224,12 @@
         setInterval(loginGet(),1000)
     }
 
-
-	function vizsgal()
+	
+    function isHost(jatekosLista,jatekos)
 	{
-		if(readyszam >= maxJatekos)
-		{
-			inditas.innerHTML = "";
-			let gomb = document.createElement("button")
-			gomb.onclick = "./zsirozasotlet(gaborszerint fasza).html"
-			inditas.appendChild(gomb)
-		}
-		console.log(readyszam)
+		return jatekosLista[0] == jatekos;
+		console.log("szevasz")
 	}
-    
 
 
 
