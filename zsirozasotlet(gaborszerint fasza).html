@@ -249,7 +249,6 @@ function felveszAsztal(p){
         const sum = table.reduce((s,c)=> s + kartyaPont(c), 0);
         pontok[p] += sum;
     }
-    
         table=[];
     utesvan=false;
     utsotamado=null;
@@ -258,7 +257,7 @@ function felveszAsztal(p){
     megjelen();
 
     checkEnd();
-}
+    }
 
 
 function checkEnd(){
@@ -289,7 +288,7 @@ function kartyaDiv(c,p,i){
 }
 
 function passz(){
-    if(!utesvan)
+    if(!utesvan && table.length %2 === 0)
     {return;};
     if(aktualis === utsotamado) return;
     felveszAsztal(utsotamado);
