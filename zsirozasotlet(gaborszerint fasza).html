@@ -169,7 +169,7 @@ function jatszik(p,idx){
         } else {
            
             if(kezek[0].length === kezek[1].length && !(hahetes(chosen) || (last && ugyanErtek(chosen,last)))){
-                kezek[p].splice(idx,1); // csak egyszer távolítjuk el
+                kezek[p].splice(idx,1);
                 megjelen();
                
                 felveszAsztal(utsotamado !== null ? utsotamado : (1-p));
