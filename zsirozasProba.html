@@ -45,17 +45,21 @@ body {
     padding:10px;
     border-radius:8px;
 }
+
+#passBtn {
+    display: none; /* Alapból rejtve */
+}
 </style>
 </head>
 
 <body>
 
-<h1>Zsírozás - Projektmunka</h1>
-<h1>HA HÜLYESÉGET RAKSZ, ELROMLIK</h1>
+<h1>Zsírozás - Magyar kártya</h1>
 <div class="area">
     <b>Aktív játékos:</b> <span id="player"></span>
-    <button id="passBtn" onclick="passz()" disabled style="margin-left:10px">Passz</button>
-    <!--<div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/80)</div>-->
+    <button id="passBtn" onclick="passz()">Passz</button>
+    <div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/8)</div>
+    <div id="roundInfo" style="margin-top:4px; font-style:italic;"></div>
 </div>
 
 <h3>Játékos 1</h3>
@@ -89,163 +93,290 @@ const ertek = {
     "ász":"asz"
 };
 
-
 function kartyakep(c){
     return `kartyak/${szin[c.s]}${ertek[c.v]}.png`;
 }
 
-
-let deck=[], kezek=[[],[]], table=[];
-let aktualis=0;
-let utsotamado=null;
-let utesvan=false;
-
-let pontok = [0,0];
+let deck = [];
+let kezek = [[], []];
+let table = [];
+let aktualis = 0;
+let roundWinner = 1; // Játékos2 kezdi (az osztó játékostársa)
+let pontok = [0, 0];
 const MAX_PONTOK = 8;
 
+function kartyaPont(c){
+    return (c.v === "10" || c.v === "ász") ? 1 : 0;
+}
+
 function paklitad(){
-    deck=[];
-    szinek.forEach(s=>{
-        ertekek.forEach(v=>{
-            deck.push({s,v});
+    deck = [];
+    szinek.forEach(s => {
+        ertekek.forEach(v => {
+            deck.push({s, v});
         });
     });
 }
 
 function kever(a){
-    for(let i=a.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [a[i],a[j]]=[a[j],a[i]];
+    for(let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
     }
 }
 
 function oszt(){
-    let turn = 0;
-    while(deck.length && (kezek[0].length < 4 || kezek[1].length < 4)){
-        if(kezek[turn].length < 4){
-            kezek[turn].push(deck.pop());
-        }
-        turn = 1 - turn;
+    kezek[0] = [];
+    kezek[1] = [];
+    for(let i = 0; i < 4; i++){
+        if(deck.length > 0) kezek[0].push(deck.pop());
+        if(deck.length > 0) kezek[1].push(deck.pop());
     }
 }
 
-function hahetes(c){ return c.v==="7"; }
-function ugyanErtek(a,b){ return a.v===b.v; }
-
-function tudTovabb(card){
-    const last = table[table.length-1];
-    if(!last) return false;
-    return ugyanErtek(card,last) || hahetes(card);
+function utoLap(card1, card2){
+    // card2 üti card1-et, ha ugyanolyan értékű vagy hetes
+    return card2.v === "7" || card2.v === card1.v;
 }
 
-function jatszik(p,idx){
-    if(p!==aktualis) return;
-
-    const card = kezek[p].splice(idx,1)[0];
-
-    const prev = table.length ? table[table.length-1] : null;
-    const canContinue = prev && (ugyanErtek(card, prev) || hahetes(card));
-
-    if(utesvan && !canContinue){
-        felveszAsztal(utsotamado);
-        return;
+function huz(jatekos){
+    while(deck.length > 0 && kezek[jatekos].length < 4){
+        kezek[jatekos].push(deck.pop());
     }
-
-    table.push(card);
-
-    if(canContinue){
-        utsotamado = p;
-        utesvan = true;
-        aktualis = 1 - p;
-    }
-    else if(table.length >= 2){
-        felveszAsztal(1-p);
-        return;
-    }
-    else{
-        aktualis = 1 - p;
-    }
-
-    megjelen();
-    //Rossz még
-    /*
-    if((deck.length === 0 && table.length === 0) || (deck.length === 0 && table.length === 1) || (deck.length === 0 && table.length === 0)){
-        alert("A játék véget ért!");
-    }
-        */
 }
 
-
-function felveszAsztal(p){
-    const count = table.reduce((acc, c) => acc + ((c.v === "10" || c.v === "ász") ? 1 : 0), 0);
-    const ossz = pontok[0] + pontok[1];
-    const maradek = Math.max(0, MAX_PONTOK - ossz);
-    const hozzajaro = Math.min(count, maradek);
-    if(hozzajaro > 0) pontok[p] += hozzajaro;
+function passz(){
+    // Passz gomb csak akkor hívható, ha:
+    // 1. 2 lap van az asztalon
+    // 2. Ütés történt (a második lap ütő)
+    // 3. A kör kezdője (roundWinner) a soron következő
     
-
-    table=[];
-    utesvan=false;
-    utsotamado=null;
-    oszt();
-    aktualis=p;
+    if(table.length !== 2) return;
+    if(!utoLap(table[0], table[1])) return;
+    if(aktualis !== roundWinner) return;
+    
+    // Passz: a második lapot rakó (aki ütött) viszi a lapokat
+    // Mivel az első lapot roundWinner rakta, a másodikat (1-roundWinner)
+    const winner = 1 - roundWinner;
+    const points = table.reduce((sum, c) => sum + kartyaPont(c), 0);
+    pontok[winner] += points;
+    
+    document.getElementById("roundInfo").textContent = 
+        `Passz! Játékos ${winner+1} viszi a lapokat (${points} pont).`;
+    
+    // Húzás
+    huz(winner);
+    huz(1 - winner);
+    
+    // Új kör, az ütő (aki most nyert) kezdi
+    roundWinner = winner;
+    aktualis = roundWinner;
+    table = [];
+    
+    if(checkEnd()) return;
     megjelen();
 }
 
-function kartyaDiv(c,p,i){
-    const d=document.createElement("div");
-    d.className="card";
+function checkEnd(){
+    if(deck.length === 0 && (kezek[0].length === 0 || kezek[1].length === 0)){
+        for(let p = 0; p < 2; p++){
+            if(kezek[p].length > 0 && kezek[p].every(c => c.v === "7")){
+                const masik = 1 - p;
+                alert(`Játék vége! Játékos ${p+1} veszített, mert csak hetesei maradtak. Játékos ${masik+1} nyert!`);
+                document.querySelectorAll('.hand .card').forEach(c => c.classList.add('disabled'));
+                document.getElementById("passBtn").style.display = "none";
+                return true;
+            }
+        }
+        
+        const winner = pontok[0] > pontok[1] ? 1 : (pontok[1] > pontok[0] ? 2 : 0);
+        if(winner === 0){
+            alert(`A játék véget ért! Döntetlen: J1 ${pontok[0]} — J2 ${pontok[1]}. Az utolsó ütést vivő játékos nyer!`);
+        } else {
+            alert(`A játék véget ért! Győztes: Játékos ${winner} — J1: ${pontok[0]} — J2: ${pontok[1]}`);
+        }
+        document.querySelectorAll('.hand .card').forEach(c => c.classList.add('disabled'));
+        document.getElementById("passBtn").style.display = "none";
+        return true;
+    }
+    return false;
+}
 
-    const img=document.createElement("img");
+function jatszik(p, idx){
+    if(p !== aktualis){
+        alert("Nem te következel!");
+        return;
+    }
+
+    const card = kezek[p][idx];
+    
+    // 1. eset: üres asztal
+    if(table.length === 0){
+        table.push(card);
+        kezek[p].splice(idx, 1);
+        aktualis = 1 - p;
+        megjelen();
+        return;
+    }
+    
+    // 2. eset: 1 lap van az asztalon
+    if(table.length === 1){
+        if(p !== aktualis) return;
+        
+        table.push(card);
+        kezek[p].splice(idx, 1);
+        
+        if(utoLap(table[0], table[1])){
+            document.getElementById("roundInfo").textContent = "Ütés! A kör kezdője üthet tovább.";
+            aktualis = roundWinner;
+        } else {
+            const winner = roundWinner;
+            const points = table.reduce((sum, c) => sum + kartyaPont(c), 0);
+            pontok[winner] += points;
+            
+            document.getElementById("roundInfo").textContent = 
+                `Játékos ${winner+1} viszi a lapokat (${points} pont).`;
+            
+            huz(winner);
+            huz(1 - winner);
+            
+            roundWinner = winner;
+            aktualis = roundWinner;
+            table = [];
+            
+            if(checkEnd()) return;
+        }
+        megjelen();
+        return;
+    }
+    
+    // 3. eset: 2 lap van az asztalon (tehát az előző ütött)
+    if(table.length === 2){
+        if(p !== roundWinner){
+            alert("Csak a kör kezdője üthet tovább!");
+            return;
+        }
+        
+        if(!utoLap(table[1], card)){
+            alert("Továbbütés csak ütőlappal lehetséges!");
+            return;
+        }
+        
+        table.push(card);
+        kezek[p].splice(idx, 1);
+        
+        aktualis = 1 - p;
+        megjelen();
+        return;
+    }
+    
+    // 4. eset: 3 lap van az asztalon (továbbütés történt)
+    if(table.length === 3){
+        if(p !== aktualis) return;
+        
+        table.push(card);
+        kezek[p].splice(idx, 1);
+        
+        let lastAttacker;
+        if(utoLap(table[2], table[3])){
+            lastAttacker = p;
+        } else {
+            lastAttacker = 1 - p;
+        }
+        
+        const points = table.reduce((sum, c) => sum + kartyaPont(c), 0);
+        pontok[lastAttacker] += points;
+        
+        document.getElementById("roundInfo").textContent = 
+            `Játékos ${lastAttacker+1} viszi a lapokat (${points} pont).`;
+        
+        huz(lastAttacker);
+        huz(1 - lastAttacker);
+        
+        roundWinner = lastAttacker;
+        aktualis = roundWinner;
+        table = [];
+        
+        if(checkEnd()) return;
+        megjelen();
+        return;
+    }
+}
+
+function kartyaDiv(c, p, i){
+    const d = document.createElement("div");
+    d.className = "card";
+
+    const img = document.createElement("img");
     img.src = kartyakep(c);
     img.alt = `${c.s} ${c.v}`;
 
     d.appendChild(img);
 
-    if(p!==undefined) d.onclick=()=>jatszik(p,i);
+    if(p !== undefined) d.onclick = () => jatszik(p, i);
     return d;
 }
 
-function passz(){
-    if(!utesvan) return;
-    if(aktualis === utsotamado) return;
-    felveszAsztal(utsotamado);
-}
-
 function megjelen(){
-    document.getElementById("player").textContent="Játékos "+(aktualis+1);
+    document.getElementById("player").textContent = "Játékos " + (aktualis + 1);
 
-    document.getElementById("table").innerHTML="";
-    document.getElementById("hand0").innerHTML="";
-    document.getElementById("hand1").innerHTML="";
+    document.getElementById("table").innerHTML = "";
+    document.getElementById("hand0").innerHTML = "";
+    document.getElementById("hand1").innerHTML = "";
 
-    table.forEach(c=>{
+    table.forEach(c => {
         document.getElementById("table").appendChild(kartyaDiv(c));
     });
 
-    kezek.forEach((h,p)=>{
-        h.forEach((c,i)=>{
-            const d=kartyaDiv(c,p,i);
-            if(p!==aktualis) d.classList.add("disabled");
-            document.getElementById("hand"+p).appendChild(d);
+    kezek.forEach((h, p) => {
+        h.forEach((c, i) => {
+            const d = kartyaDiv(c, p, i);
+            if(p !== aktualis) d.classList.add("disabled");
+            document.getElementById("hand" + p).appendChild(d);
         });
     });
-
-    /*
+    
     const scoresEl = document.getElementById("scores");
     if(scoresEl){
         const total = pontok[0] + pontok[1];
         scoresEl.textContent = `J1: ${pontok[0]} — J2: ${pontok[1]} (Összesen: ${total}/${MAX_PONTOK})`;
     }
-        */
-
+    
+    const roundInfo = document.getElementById("roundInfo");
     const passBtn = document.getElementById("passBtn");
-    passBtn.disabled = !(utesvan && utsotamado!==null && aktualis !== utsotamado);
+    
+    // PASSZ GOMB KEZELÉSE
+    // Csak akkor jelenik meg, ha:
+    // 1. 2 lap van az asztalon
+    // 2. Ütés történt (a második lap ütő)
+    // 3. A kör kezdője (roundWinner) a soron következő
+    if(table.length === 2 && utoLap(table[0], table[1]) && aktualis === roundWinner) {
+        passBtn.style.display = "inline-block";
+        passBtn.disabled = false;
+        roundInfo.textContent = "Ütés! A kör kezdője üthet tovább vagy passzolhat.";
+    } else {
+        passBtn.style.display = "none";
+        passBtn.disabled = true;
+        
+        if(table.length === 1){
+            roundInfo.textContent = "Válassz lapot a második játékos!";
+        } else if(table.length === 2 && utoLap(table[0], table[1])){
+            roundInfo.textContent = "Ütés! A kör kezdője üthet tovább.";
+        } else if(table.length === 3){
+            roundInfo.textContent = "Utolsó lap (bármit tehetsz).";
+        } else if(table.length === 0){
+            roundInfo.textContent = "Új kör kezdődik.";
+        } else if(table.length === 2 && !utoLap(table[0], table[1])){
+            roundInfo.textContent = "Nem ütés - a kör kezdője viszi a lapokat.";
+        }
+    }
 }
 
+// Játék inicializálása
 paklitad();
 kever(deck);
 oszt();
+aktualis = roundWinner;
 megjelen();
 </script>
 
