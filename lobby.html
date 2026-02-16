@@ -65,7 +65,7 @@
 
     <script>
 		let jatekosok = [];
-        let maxJatekos=document.getElementById("jatekosSzam").value;
+        let maxJatekos= 0;
         let playerszam = 0;
 		let readyszam = 0;
         let nev;
@@ -116,6 +116,7 @@
 			gomb.textContent = "Indítás"
 			inditas.appendChild(gomb)
 		}
+		
 	}
 
     function loginGet()
@@ -135,17 +136,15 @@
 				else
 				{
 					userList(data.user.players);
-				}				
+					console.log(data.user.players.readyState)
+					console.log(data.user.players.filter(x => x.readyState == "ready"))
+				}
+					
 			});
         
-			if(isHost(jatekosok,nev))
-			{
-
-				let gomb = document.createElement("button")
-				gomb.textContent = "Indítás"
-				inditas.appendChild(gomb)
-			}
-        //loginGet()
+        //loginGe
+		
+		
 	}
 
     
@@ -169,7 +168,7 @@
 			
 		});
 
-		console.log(jatekosok)
+		//console.log(jatekosok)
 
 	}
     
@@ -193,7 +192,7 @@
 				}				
 			});
 		
-
+		
 		
 		
 	}
