@@ -69,7 +69,9 @@ body {
 <body>
 
 <h1>Zsírozás - Projektmunka</h1>
-<h1>MOST MÁR NEM TUDSZ HÜLYESÉGET RAKNI!</h1>
+<h1>MOST MÁR NEM TUDSZ HÜLYESÉGET RAKNI! (DE AZÉRT NE PRÓBÁLD MEG)</h1>
+<h1 id="gyoztesKiir" style="text-align: center;"></h1>
+<h1 id="pontokAVegen" style="text-align: center;"></h1>
 <div class="area">
     <b>Aktív játékos:</b> <span id="player"></span>
     <button id="passBtn" onclick="passz()">Passz</button>
@@ -213,10 +215,18 @@ function jatekVege(){
         
         const winner = pontok[0] > pontok[1] ? 1 : (pontok[1] > pontok[0] ? 2 : 0);
         if(winner === 0){
-            alert(`A játék véget ért! Döntetlen: J1 ${pontok[0]} — J2 ${pontok[1]}. Az utolsó ütést vivő játékos nyer!`);
+            frissit();
+            roundInfo.textContent = "Véget ért a játék.";
+            document.getElementById("gyoztesKiir").textContent = `A játék véget ért! \tDöntetlen!`;
+            document.getElementById("pontokAVegen").textContent = `Játékos 1: ${pontok[0]} pont — Játékos 2: ${pontok[1]} pont. Az utolsó ütést vivő játékos nyer!`;
+            //alert(`A játék véget ért! Döntetlen: Játékos 1: ${pontok[0]} pont — Játékos 2: ${pontok[1]} pont. Az utolsó ütést vivő játékos nyer!`);
 
         } else {
-            alert(`A játék véget ért! \nGyőztes: Játékos ${winner}\nJátékos 1: ${pontok[0]} pont — Játékos 2: ${pontok[1]} pont`);
+            frissit();
+            roundInfo.textContent = "Véget ért a játék.";
+            document.getElementById("gyoztesKiir").textContent = `A játék véget ért! \tGyőztes: Játékos ${winner}`;
+            document.getElementById("pontokAVegen").textContent = `Játékos 1: ${pontok[0]} pont \t — Játékos 2: ${pontok[1]} pont`;
+            //alert(`A játék véget ért! \nGyőztes: Játékos ${winner}\nJátékos 1: ${pontok[0]} pont — Játékos 2: ${pontok[1]} pont`);
         }
         document.querySelectorAll('.hand .card').forEach(c => c.classList.add('disabled'));
         document.getElementById("passBtn").style.display = "none";
