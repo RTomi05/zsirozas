@@ -64,6 +64,7 @@
     </div>
 
     <script>
+		let readyjatekosok = [];
 		let jatekosok = [];
         let maxJatekos= 0;
         let playerszam = 0;
@@ -109,19 +110,11 @@
         console.log(playerszam)
         upd= setInterval(function(){loginGet()},2000)
 
-		if(isHost(jatekosok,nev))
-		{
-
-			let gomb = document.createElement("button")
-			gomb.textContent = "Indítás"
-			inditas.appendChild(gomb)
-		}
 		
 	}
 
     function loginGet()
 	{
-		inditas = "";
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 		if(nev=="" || kod=="") return;
@@ -136,11 +129,22 @@
 				else
 				{
 					userList(data.user.players);
-					console.log(data.user.players.readyState)
-					console.log(data.user.players.filter(x => x.readyState == "ready"))
+					jatekosok = data.user.players;
+					playerszam = jatekosok.length;
+					console.log(jatekosok)
+					console.log(data.user.players.readyState);
+					readyjatekosok = data.user.players.filter(x => x.readyState == "ready")
+					console.log(readyjatekosok)
 				}
-					
-			});
+				
+				if(jatekosok[0].name == nev && readyjatekosok.length >= 4)
+				{
+					inditas.innerHTML = "<button>Indítás</button>"
+					console.log("szia")
+
+				}
+
+				});
         
         //loginGe
 		
@@ -224,11 +228,7 @@
     }
 
 	
-    function isHost(jatekosLista,jatekos)
-	{
-		return jatekosLista[0] == jatekos;
-		console.log("szevasz")
-	}
+
 
 
 
