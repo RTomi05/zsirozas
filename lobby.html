@@ -15,15 +15,18 @@
             height: 20%;
             width: 50%;
         }
-
+		#foBlokk
+		{
+			
+		}
 
     </style>
 
 </head>
 
-<body class="bg-dark">
+<body class="bg-secondary ">
 
-    <div class="container col-lg-12 bg-success">
+    <div class="container col-lg-12 bg-dark" id="foBlokk">
         <div class="row">
                 <div class="col-lg-6">
                 <h1 class="text-light">Csatlakozás játékhoz</h1>
@@ -43,6 +46,7 @@
                 <div class="col-lg-6 input-group md-1 mb-4">
                     <button onclick="kuld()">Belépés</button>
                     <button onclick="loginGet()">Frissít</button>
+
                 </div>
 				<div class="col-lg-6 input-group md-1 mb-4" id="inditas">
                 </div>
@@ -137,10 +141,9 @@
 					console.log(readyjatekosok)
 				}
 				
-				if(jatekosok[0].name == nev && readyjatekosok.length >= 4)
+				if(jatekosok[0].name == nev && readyjatekosok.length >= data.user.maxPlayerCount)
 				{
-					inditas.innerHTML = "<button>Indítás</button>"
-					console.log("szia")
+					inditas.innerHTML = "<button onclick=''>Indítás</button>"
 
 				}
 
@@ -161,6 +164,19 @@
 
 			let blokk=document.createElement("div");
 			blokk.innerHTML =`${p.name} (${p.readyState})`;
+			blokk.classList = "text-white"
+			if(p.readyState == "ready")
+			{
+				blokk.classList = "bg-primary"
+			}
+			else if(p.readyState == "not ready")
+			{
+				blokk.classList += "bg-danger"
+			}
+			else if(p.readyState == "pass")
+			{
+				blokk.classList += "bg-secondary"
+			}
 			blokk.innerHTML+=`<button onclick="kick('${p.name}')">kick</button>`;
 			blokk.innerHTML+=`<button onclick="ready('${p.name}')">ready</button>`;
 			userDiv.appendChild(blokk);
