@@ -17,7 +17,26 @@
         }
 		#foBlokk
 		{
-			
+			border-radius: 15px;
+		}
+		.userBlokk
+		{
+			padding:10px;
+			border:1px solid black;
+			border-collapse: collapse;
+		}
+		
+		.allapotjelolo
+		{
+			padding: 5px;
+			margin:5px;
+			display: inline-block;
+			border-radius: 10px;
+		}
+		.allapotgomb
+		{
+			padding:2px;
+			margin:2px;
 		}
 
     </style>
@@ -163,22 +182,23 @@
 		players.forEach(p => {
 
 			let blokk=document.createElement("div");
-			blokk.innerHTML =`${p.name} (${p.readyState})`;
-			blokk.classList = "text-white"
+			blokk.innerHTML =`${p.name}`;
+			blokk.classList = "userBlokk text-white "
+			
 			if(p.readyState == "ready")
 			{
-				blokk.classList = "bg-primary"
+				blokk.innerHTML += "<span class='allapotjelolo bg-success'>"+p.readyState+"</span>"
 			}
 			else if(p.readyState == "not ready")
 			{
-				blokk.classList += "bg-danger"
+				blokk.innerHTML += "<span class='allapotjelolo bg-danger'>"+p.readyState+"</span>"
 			}
 			else if(p.readyState == "pass")
 			{
-				blokk.classList += "bg-secondary"
+				blokk.innerHTML += "<span class='allapotjelolo bg-secondary'>"+p.readyState+"</span>"
 			}
-			blokk.innerHTML+=`<button onclick="kick('${p.name}')">kick</button>`;
-			blokk.innerHTML+=`<button onclick="ready('${p.name}')">ready</button>`;
+			blokk.innerHTML+=`<button class="allapotgomb btn btn-light" onclick="kick('${p.name}')">kick</button>`;
+			blokk.innerHTML+=`<button class="allapotgomb btn btn-light" onclick="ready('${p.name}')">ready</button>`;
 			userDiv.appendChild(blokk);
 
 			if(!jatekosok.includes(p))
