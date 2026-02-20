@@ -70,6 +70,7 @@ body {
 
 <h1>Zsírozás - Projektmunka</h1>
 <h1>MOST MÁR NEM TUDSZ HÜLYESÉGET RAKNI! (DE AZÉRT NE PRÓBÁLD MEG)</h1>
+<h1 id="jatekVegeKiir" style="text-align: center;"></h1>
 <h1 id="gyoztesKiir" style="text-align: center;"></h1>
 <h1 id="pontokAVegen" style="text-align: center;"></h1>
 <div class="area">
@@ -153,7 +154,7 @@ function oszt(){
 
 function utolap(card1, card2){
 
-    return card2.v === "7" || card2.v === card1.v;
+    return card2.v === "7" || card2.v === card1.v || card1.v === "7";
 }
 
 function vanUtolapja(jatekos, utendoLap){
@@ -224,7 +225,8 @@ function jatekVege(){
         } else {
             frissit();
             roundInfo.textContent = "Véget ért a játék.";
-            document.getElementById("gyoztesKiir").textContent = `A játék véget ért! \tGyőztes: Játékos ${winner}`;
+            document.getElementById("jatekVegeKiir").textContent = `A játék véget ért!`;
+            document.getElementById("gyoztesKiir").textContent = `Győztes: Játékos ${winner}`;
             document.getElementById("pontokAVegen").textContent = `Játékos 1: ${pontok[0]} pont \t — Játékos 2: ${pontok[1]} pont`;
             //alert(`A játék véget ért! \nGyőztes: Játékos ${winner}\nJátékos 1: ${pontok[0]} pont — Játékos 2: ${pontok[1]} pont`);
         }
