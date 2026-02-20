@@ -39,6 +39,78 @@
 			margin:2px;
 		}
 
+		.ready
+		{
+			border-radius: 0px 10px 10px 0px;
+			margin-left: 2px;
+			padding: 3px;
+		}
+		.ready:hover
+		{
+			background-color: black;
+			color:white;
+			transform: translateY(-1px);
+		}
+		
+		.kick
+		{
+			border-radius: 10px 0px 0px 10px;
+			padding: 3px;
+		}
+
+		.kick:hover
+		{
+			background-color: black;
+			color:white;
+			transform: translateY(-1px);
+		}
+		
+		#belepes {
+		align-items: center;
+		background-color: #FFFFFF;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: .25rem;
+		box-shadow: rgba(0, 0, 0, 0.02) 0 1px 3px 0;
+		box-sizing: border-box;
+		color: rgba(0, 0, 0, 0.85);
+		cursor: pointer;
+		display: inline-flex;
+		font-family: system-ui,-apple-system,system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;
+		font-size: 16px;
+		font-weight: 600;
+		justify-content: center;
+		line-height: 1.25;
+		min-height: 3rem;
+		padding: calc(.87rem - 1px) calc(1.5rem - 1px);
+		text-decoration: none;
+		transition: all 250ms;
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: manipulation;
+		vertical-align: baseline;
+		width: auto;
+		}
+
+		#belepes:hover,
+		#belepes:focus {
+		border-color: rgba(0, 0, 0, 0.15);
+		box-shadow: rgba(0, 0, 0, 0.1) 0 4px 12px;
+		color: rgba(0, 0, 0, 0.65);
+		}
+
+		#belepes:hover {
+		transform: translateY(-1px);
+		}
+
+		#belepes:active {
+		background-color: #F0F0F1;
+		border-color: rgba(0, 0, 0, 0.15);
+		box-shadow: rgba(0, 0, 0, 0.06) 0 2px 4px;
+		color: rgba(0, 0, 0, 0.65);
+		transform: translateY(0);
+		}
+
+
     </style>
 
 </head>
@@ -63,8 +135,8 @@
                     <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
                 </div>
                 <div class="col-lg-6 input-group md-1 mb-4">
-                    <button onclick="kuld()">Belépés</button>
-                    <button onclick="loginGet()">Frissít</button>
+                    <button onclick="kuld()" id="belepes">Belépés</button>
+                    <!--<button onclick="loginGet()">Frissít</button>-->
 
                 </div>
 				<div class="col-lg-6 input-group md-1 mb-4" id="inditas">
@@ -162,7 +234,7 @@
 				
 				if(jatekosok[0].name == nev && readyjatekosok.length >= data.user.maxPlayerCount)
 				{
-					inditas.innerHTML = "<button onclick=''>Indítás</button>"
+					inditas.innerHTML = "<button class='button-with-icon' onclick=''>Indítás</button>"
 
 				}
 
@@ -197,8 +269,8 @@
 			{
 				blokk.innerHTML += "<span class='allapotjelolo bg-secondary'>"+p.readyState+"</span>"
 			}
-			blokk.innerHTML+=`<button class="allapotgomb btn btn-light" onclick="kick('${p.name}')">kick</button>`;
-			blokk.innerHTML+=`<button class="allapotgomb btn btn-light" onclick="ready('${p.name}')">ready</button>`;
+			blokk.innerHTML+=`<button class="kick btn btn-light" onclick="kick('${p.name}')">kick</button>`;
+			blokk.innerHTML+=`<button class="ready btn btn-light" onclick="ready('${p.name}')">ready</button>`;
 			userDiv.appendChild(blokk);
 
 			if(!jatekosok.includes(p))
