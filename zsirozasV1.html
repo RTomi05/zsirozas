@@ -18,6 +18,7 @@ body {
     flex-wrap: wrap;
 }
 
+
 .card {
     width:200px;
     height:280px;
@@ -48,20 +49,33 @@ body {
     margin-bottom:20px;
 }
 
+.table-area {
+    position: relative;
+    display: flex;
+    align-items: center;  
+}
+
+.table-area .table {
+    flex: 1 1 auto;
+}
+
 #passBtn {
-    display: none;
-    margin-left:10px;
-    padding:5px 15px;
+    height: 60px;
+    width: 120px;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding:8px 14px;
     background:#ffffff;
     border:none;
     border-radius:5px;
     color:rgb(0, 0, 0);
     font-weight:bold;
     cursor:pointer;
-}
-
-#passBtn {
     display: none; 
+    z-index: 10;
+    margin-left: 500px;
 }
 </style>
 </head>
@@ -75,7 +89,7 @@ body {
 <h1 id="pontokAVegen" style="text-align: center;"></h1>
 <div class="area">
     <b>Aktív játékos:</b> <span id="player"></span>
-    <button id="passBtn" onclick="passz()">Passz</button>
+    
     <div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/8)</div>
     <div id="roundInfo" style="margin-top:4px; font-style:italic;"></div>
 </div>
@@ -84,7 +98,10 @@ body {
 <div class="hand" id="hand0"></div>
 
 <h3>Asztal</h3>
-<div class="table" id="table"></div>
+<div class="table-area">
+    <div class="table" id="table"></div>
+    <button id="passBtn" class="passzbtn" onclick="passz()">Passz</button>
+</div>
 
 <h3>Játékos 2</h3>
 <div class="hand" id="hand1"></div>
