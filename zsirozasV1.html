@@ -190,11 +190,20 @@ function passz(){
     if(asztal.length !== 2) return;
     if(!utolap(asztal[0], asztal[1])) return;
     if(aktualis !== korKezdo) return;
-    
-    
-    const hasValid = vanUtolapja(aktualis, asztal[1]);
-    if(!hasValid && !vanUtolapja(1 - aktualis, asztal[1])) { console.log("Nincs ütőlap, automatikus passz!");
 
+    const isDoubleSeven = asztal[0].v === "7" && asztal[1].v === "7";
+    const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+    if(isDoubleSeven && !hasSevenInHand)
+    {
+        return;
+    }
+    let hasValid = vanUtolapja(aktualis, asztal[1]);
+    if(isDoubleSeven && !hasSevenInHand) 
+    {
+        hasValid = false; 
+    }
+    if(!hasValid && !vanUtolapja(1 - aktualis, asztal[1])) 
+    { 
         return;
     }
     
@@ -392,36 +401,37 @@ function frissit(){
         const total = pontok[0] + pontok[1];
         scoresEl.textContent = `J1: ${pontok[0]} — J2: ${pontok[1]} (Összesen: ${total}/${MAX_PONTOK})`;
     }
-    
     const roundInfo = document.getElementById("roundInfo");
     const passBtn = document.getElementById("passBtn");
-    
-    
-    if(asztal.length === 2 && utolap(asztal[0], asztal[1]) && aktualis === korKezdo) {
-        const hasValid = vanUtolapja(aktualis, asztal[1]);
-        
+    if(asztal.length === 2 && utolap(asztal[0], asztal[1]) && aktualis === korKezdo) {  
+        const isDoubleSeven = asztal[0].v === "7" && asztal[1].v === "7";
+        const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+        const autoPassSeven = isDoubleSeven && !hasSevenInHand;
+        let hasValid = vanUtolapja(aktualis, asztal[1]);
+        if(autoPassSeven) {
+            hasValid = false;
+        }
         if(!hasValid) {
-          
-            console.log("Nincs ütőlap, automatikus passz!");
-            roundInfo.textContent = "Nincs ütőlap - automatikus passz!";
+            if(autoPassSeven) console.log("Nincs hetese, automatikus passz!");
+            else console.log("Nincs ütőlap, automatikus passz!");
+            roundInfo.textContent = autoPassSeven ?
+                "Nincs hetese - automatikus passz!" :
+                "Nincs ütőlap - automatikus passz!";
             passBtn.style.display = "none";
-            
-     
             setTimeout(() => {
                 if(asztal.length === 2 && utolap(asztal[0], asztal[1]) && aktualis === korKezdo) {
                     const winner = 1 - korKezdo;
                     const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
                     pontok[winner] += points;
                     
-                    roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
-                    
+                    roundInfo.textContent = autoPassSeven ?
+                        `Automatikus passz (nincs hetes)! Játékos ${winner+1} viszi a lapokat, (${points} pont).` :
+                        `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
                     huz(winner);
                     huz(1 - winner);
-                    
                     korKezdo = winner;
                     aktualis = korKezdo;
                     asztal = [];
-                    
                     if(!jatekVege()) frissit();
                 }
             }, 500);
