@@ -178,12 +178,13 @@
                 </div>
                 <div class="col-lg-6 input-group md-3">
                     <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
-                    <input type="range" id="jatekosSzam" class="my-2" onmouseup="kiir()" min="1" max="4">
+                    <input type="range" id="jatekosSzam" class="my-2" onchange="kiir()" min="1" max="4">
                     <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
                 </div>
                 <div class="col-lg-6 input-group md-1 mb-4">
                     <button onclick="kuld()" id="belepes">Belépés</button>
-                    <!--<button onclick="loginGet()">Frissít</button>-->
+                    <button onclick="loginGet()">Frissít</button>
+					<button class='button-with-icon' id="inditasGomb" onclick='indit()'>Indítás</button>
 
                 </div>
 				<div class="col-lg-6 input-group md-1 mb-4" id="inditas">
@@ -220,7 +221,6 @@
     {
         document.getElementById("jatekosSzamkiir").innerHTML = document.getElementById("jatekosSzam").value
 
-
     }
 
 	function kuld()
@@ -234,7 +234,7 @@
 
 		maxJatekos=document.getElementById("jatekosSzam").value;
 
-		fetch(`https://pepa.hu/api/jatekApi/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
+		fetch(`https://wexen.hu/api/jatekApi/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -250,7 +250,7 @@
 			});
         playerszam++;
         console.log(playerszam)
-        upd= setInterval(function(){loginGet()},2000)
+        //upd= setInterval(function(){loginGet()},2000)
 
 		
 	}
@@ -260,7 +260,7 @@
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 		if(nev=="" || kod=="") return;
-		fetch(`https://pepa.hu/api/jatekApi/zsirozas/lobby/${nev}/${kod}`)
+		fetch(`https://wexen.hu/api/jatekApi/zsirozas/lobby/${nev}/${kod}`)
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -281,7 +281,7 @@
 				
 				if(jatekosok[0].name == nev && readyjatekosok.length >= data.user.maxPlayerCount)
 				{
-					inditas.innerHTML = `<button class='button-with-icon' id="inditasGomb" onclick='inditas()'>Indítás</button>`
+					inditas.innerHTML = `<button class='button-with-icon' id="inditasGomb" onclick='indit()'>Indítás</button>`
 
 				}
 
@@ -337,7 +337,7 @@
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 
-		fetch(`http://pepa.hu/api/jatekApi/zsirozas/player/${nev}/${kod}`,{method:"PUT",body:JSON.stringify({ name: playername })})
+		fetch(`http://wexen.hu/api/jatekApi/zsirozas/player/${nev}/${kod}`,{method:"PUT",body:JSON.stringify({ name: playername })})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -361,7 +361,7 @@
 		const nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 
-		fetch(`https://pepa.hu/api/jatekApi/zsirozas/player/${nev}/${kod}`,{method:"DELETE",body:JSON.stringify({ name: playername })})
+		fetch(`https://wexen.hu/api/jatekApi/zsirozas/player/${nev}/${kod}`,{method:"DELETE",body:JSON.stringify({ name: playername })})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -382,7 +382,7 @@
         setInterval(loginGet(),1000)
     }
 
-	function inditas()
+	function indit()
 	{
 		
 	}
