@@ -207,6 +207,7 @@
     </div>
 
     <script>
+
 		let readyjatekosok = [];
 		let jatekosok = [];
         let maxJatekos= 0;
@@ -214,6 +215,7 @@
 		let readyszam = 0;
         let nev;
         let upd;
+		let url = "https://wexen.hu/api/jatekApi";
 
 		let inditas = document.getElementById("inditas")
 
@@ -234,7 +236,7 @@
 
 		maxJatekos=document.getElementById("jatekosSzam").value;
 
-		fetch(`https://wexen.hu/api/jatekApi/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
+		fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -260,7 +262,7 @@
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 		if(nev=="" || kod=="") return;
-		fetch(`https://wexen.hu/api/jatekApi/zsirozas/lobby/${nev}/${kod}`)
+		fetch(`${url}/zsirozas/lobby/${nev}/${kod}`)
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -334,10 +336,10 @@
     	
 	function ready(playername)
 	{
-		nev=document.getElementById("nev").value;
+		nev = document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 
-		fetch(`http://wexen.hu/api/jatekApi/zsirozas/player/${nev}/${kod}`,{method:"PUT",body:JSON.stringify({ name: playername })})
+		fetch(`${url}/zsirozas/player/${nev}/${kod}`,{method:"PUT",body:JSON.stringify({ name: playername })})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -384,7 +386,14 @@
 
 	function indit()
 	{
+		let hely = window.location.href
 		
+		console.log(hely.split("/"))
+
+		let jatekHely = `${hely[0]}/${hely[2]}/${hely[3]}/zsirozas/zsirozasV1.html`
+
+		window.location.href = jatekHely
+
 	}
 
 
