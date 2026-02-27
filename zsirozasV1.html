@@ -138,6 +138,7 @@ let asztal = [];
 let aktualis = 0;
 let korKezdo = 1;
 let pontok = [0, 0];
+let lastAttacker = null; // tracks who played the last successful hit
 const MAX_PONTOK = 80;
 
 function kartyaPont(c){
@@ -185,25 +186,56 @@ function huz(jatekos){
     }
 }
 
+function equalDraw(player1, player2){
+    // Draw up to 4 for each player; if not enough cards, distribute equally
+    const cardsNeeded = 8 - (kezek[player1].length + kezek[player2].length);
+    const cardsAvailable = pakli.length;
+    
+    if(cardsAvailable >= cardsNeeded) {
+        // Enough cards, use regular draw
+        huz(player1);
+        huz(player2);
+    } else {
+        // Not enough cards, distribute equally
+        const cardsPerPlayer = Math.floor(cardsAvailable / 2);
+        for(let i = 0; i < cardsPerPlayer; i++) {
+            if(pakli.length > 0) kezek[player1].push(pakli.pop());
+            if(pakli.length > 0) kezek[player2].push(pakli.pop());
+        }
+    }
+}
+
 function passz(){
 
-    if(asztal.length !== 2) return;
-    if(!utolap(asztal[0], asztal[1])) return;
+    // Allow pass on 2, 4, or 6 card tables
+    if(asztal.length !== 2 && asztal.length !== 4 && asztal.length !== 6) return;
     if(aktualis !== korKezdo) return;
 
-    const isDoubleSeven = asztal[0].v === "7" && asztal[1].v === "7";
-    const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
-    if(isDoubleSeven && !hasSevenInHand)
-    {
-        return;
+    // Check for hit based on table length
+    let hasHit = false;
+    if(asztal.length === 2){
+        hasHit = utolap(asztal[0], asztal[1]);
+    } else if(asztal.length === 4 || asztal.length === 6){
+        hasHit = true; // If we got here with 4/6 cards, there was a hit chain
     }
-    let hasValid = vanUtolapja(aktualis, asztal[1]);
-    if(isDoubleSeven && !hasSevenInHand) 
-    {
-        hasValid = false; 
+    
+    if(!hasHit) return;
+
+    // For 2-card case: check double-seven rule
+    if(asztal.length === 2){
+        const isDoubleSeven = asztal[0].v === "7" && asztal[1].v === "7";
+        const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+        if(isDoubleSeven && !hasSevenInHand){
+            return;
+        }
     }
-    if(!hasValid && !vanUtolapja(1 - aktualis, asztal[1])) 
-    { 
+    
+    // Check if current player has a valid hit card
+    const last = asztal[asztal.length - 1];
+    let hasValid = vanUtolapja(aktualis, last);
+    
+    // New rule: cannot choose pass if the current player has no valid hit
+    if(!hasValid) {
         return;
     }
     
@@ -216,13 +248,13 @@ function passz(){
         `Passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
     
    
-    huz(winner);
-    huz(1 - winner);
+    equalDraw(winner, 1 - winner);
     
    
     korKezdo = winner;
     aktualis = korKezdo;
     asztal = [];
+    lastAttacker = null;
     
     if(jatekVege()) return;
     frissit();
@@ -270,93 +302,85 @@ function jatszik(p, idx){
     }
 
     const card = kezek[p][idx];
-    
-   
+
+    // first card always allowed
     if(asztal.length === 0){
         asztal.push(card);
         kezek[p].splice(idx, 1);
         korKezdo = p;
+        lastAttacker = p;
         aktualis = 1 - p;
         frissit();
         return;
     }
-    
-    
+
+    // second card: check for ütéssel
     if(asztal.length === 1){
         asztal.push(card);
         kezek[p].splice(idx, 1);
-        
+
         if(utolap(asztal[0], asztal[1])){
-            
+            // hit occurred, starter may continue or pass
+            lastAttacker = korKezdo;
             document.getElementById("roundInfo").textContent = "Ütés! A kör kezdője üthet tovább vagy passzolhat.";
             aktualis = korKezdo;
         } else {
-           
+            // no hit, round starter takes the cards
             const winner = korKezdo;
             const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
             pontok[winner] += points;
-            
+
             document.getElementById("roundInfo").textContent = 
                 `Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
-            
-            huz(winner);
-            huz(1 - winner);
-            
+
+            equalDraw(winner, 1 - winner);
+
             korKezdo = winner;
             aktualis = korKezdo;
             asztal = [];
-            
+            lastAttacker = null;
+
             if(jatekVege()) return;
         }
         frissit();
         return;
     }
-    
-   
-    if(asztal.length === 2){
-        if(p !== korKezdo){
-            alert("Csak a kör kezdője üthet tovább!");
-            return;
-        }
-        
-        if(!utolap(asztal[1], card)){
-            alert("Továbbütés csak ütőlappal lehetséges!");
-            return;
-        }
-        
-        asztal.push(card);
-        kezek[p].splice(idx, 1);
-        
+
+    // beyond two cards, we are in a hit chain; each play is allowed but may end the trick
+    const prev = asztal[asztal.length - 1];
+    const isHit = utolap(prev, card);
+
+    asztal.push(card);
+    kezek[p].splice(idx, 1);
+
+    if(isHit){
+        // update who last hit
+        lastAttacker = p;
         aktualis = 1 - p;
+        // provide helpful message depending on whose turn is next
+        if(p === korKezdo) {
+            document.getElementById("roundInfo").textContent = "Ütés! A kör kezdője üthet tovább vagy passzolhat.";
+        } else {
+            document.getElementById("roundInfo").textContent = "Ütés! A másik játékos üthet tovább vagy passzolhat.";
+        }
         frissit();
         return;
-    }
-
-
-    if(asztal.length % 2 !== 0){
-        asztal.push(card);
-        kezek[p].splice(idx, 1);
-        
-        let lastAttacker;
-        if(utolap(asztal[2], asztal[3])){
-            lastAttacker = p;
-        } else {
-            lastAttacker = 1 - p;
-        }
-        
+    } else {
+        // chain breaks, lastAttacker wins the trick
+        const winner = lastAttacker !== null ? lastAttacker : korKezdo;
         const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
-        pontok[lastAttacker] += points;
-        
-        document.getElementById("roundInfo").textContent = 
-            `Játékos ${lastAttacker+1} viszi a lapokat, (${points} pont).`;
+        pontok[winner] += points;
 
-        huz(lastAttacker);
-        huz(1 - lastAttacker);
-        
-        korKezdo = lastAttacker;
+        document.getElementById("roundInfo").textContent = 
+            `Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+
+        equalDraw(winner, 1 - winner);
+
+        korKezdo = winner;
         aktualis = korKezdo;
         asztal = [];
-        
+        lastAttacker = null;
+
         if(jatekVege()) return;
         frissit();
         return;
@@ -407,11 +431,33 @@ function frissit(){
         const isDoubleSeven = asztal[0].v === "7" && asztal[1].v === "7";
         const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
         const autoPassSeven = isDoubleSeven && !hasSevenInHand;
+        const equalHands = kezek[0].length === kezek[1].length;
+        const anyEmptyHands = kezek[0].length === 0 || kezek[1].length === 0;
         let hasValid = vanUtolapja(aktualis, asztal[1]);
         if(autoPassSeven) {
             hasValid = false;
         }
-        if(!hasValid) {
+
+        // If either player has no cards left, automatic pass should occur
+        if(anyEmptyHands) {
+            passBtn.style.display = "none";
+            roundInfo.textContent = "Nincs több lap a kezekben - automatikus passz.";
+            setTimeout(() => {
+                if(asztal.length === 2 && utolap(asztal[0], asztal[1]) && aktualis === korKezdo) {
+                    const winner = 1 - korKezdo;
+                    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                    pontok[winner] += points;
+                    roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                    equalDraw(winner, 1 - winner);
+                    korKezdo = winner;
+                    aktualis = korKezdo;
+                    asztal = [];
+                    if(!jatekVege()) frissit();
+                }
+            }, 300);
+        }
+        // If there is no valid hit and hands are equal -> automatic pass (existing behaviour)
+        else if(!hasValid && equalHands) {
             if(autoPassSeven) console.log("Nincs hetese, automatikus passz!");
             else console.log("Nincs ütőlap, automatikus passz!");
             roundInfo.textContent = autoPassSeven ?
@@ -423,20 +469,44 @@ function frissit(){
                     const winner = 1 - korKezdo;
                     const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
                     pontok[winner] += points;
-                    
                     roundInfo.textContent = autoPassSeven ?
                         `Automatikus passz (nincs hetes)! Játékos ${winner+1} viszi a lapokat, (${points} pont).` :
                         `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
-                    huz(winner);
-                    huz(1 - winner);
+                    equalDraw(winner, 1 - winner);
                     korKezdo = winner;
                     aktualis = korKezdo;
                     asztal = [];
                     if(!jatekVege()) frissit();
                 }
             }, 500);
+        }
+        // If there is no valid hit and hands are NOT equal -> force a play (tenni) then automatic pass
+        else if(!hasValid) {
+            passBtn.style.display = "none";
+            roundInfo.textContent = autoPassSeven ?
+                "Nincs hetese - kötelező tenni, majd automatikus passz." :
+                "Nincs ütőlap - kötelező tenni, majd automatikus passz.";
+            setTimeout(() => {
+                if(asztal.length === 2 && aktualis === korKezdo && !vanUtolapja(aktualis, asztal[1])){
+                    // force the current player to put their first available card
+                    if(kezek[aktualis].length > 0){
+                        const forced = kezek[aktualis].shift();
+                        asztal.push(forced);
+                    }
+                    // resolve immediately as a chain-break (automatic pass)
+                    const winner = lastAttacker !== null ? lastAttacker : korKezdo;
+                    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                    pontok[winner] += points;
+                    roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                    equalDraw(winner, 1 - winner);
+                    korKezdo = winner;
+                    aktualis = korKezdo;
+                    asztal = [];
+                    lastAttacker = null;
+                    if(!jatekVege()) frissit();
+                }
+            }, 400);
         } else {
-       
             passBtn.style.display = "inline-block";
             passBtn.disabled = false;
             roundInfo.textContent = "Ütés! Van ütőlapod - továbbüthetsz vagy passzolhatsz.";
@@ -444,7 +514,83 @@ function frissit(){
     } else {
         passBtn.style.display = "none";
         passBtn.disabled = true;
-        
+
+        // Special handling for 4 cards on table: auto-pass if current player has no hit,
+        // otherwise allow manual pass via button.
+        if(asztal.length === 4){
+            const last = asztal[asztal.length - 1];
+            const hasValid = vanUtolapja(aktualis, last);
+            if(!hasValid){
+                roundInfo.textContent = "Nincs ütőlapod a 4 lapon - automatikus passz.";
+                setTimeout(() => {
+                    if(asztal.length === 4){
+                        const winner = lastAttacker !== null ? lastAttacker : korKezdo;
+                        const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                        pontok[winner] += points;
+                        roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                        equalDraw(winner, 1 - winner);
+                        korKezdo = winner;
+                        aktualis = korKezdo;
+                        asztal = [];
+                        lastAttacker = null;
+                        if(!jatekVege()) frissit();
+                    }
+                }, 350);
+            } else {
+                passBtn.style.display = "inline-block";
+                passBtn.disabled = false;
+                roundInfo.textContent = "4 lap az asztalon - van ütőlapod: továbbüthetsz vagy passzolhatsz.";
+            }
+            return;
+        }
+        // Special handling for 6 cards on table: auto-pass if current player has no hit,
+        // otherwise allow manual pass via button.
+        if(asztal.length === 6){
+            const last = asztal[asztal.length - 1];
+            const hasValid = vanUtolapja(aktualis, last);
+            if(!hasValid){
+                roundInfo.textContent = "Nincs ütőlapod a 6 lapon - automatikus passz.";
+                setTimeout(() => {
+                    if(asztal.length === 6){
+                        const winner = lastAttacker !== null ? lastAttacker : korKezdo;
+                        const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                        pontok[winner] += points;
+                        roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                        equalDraw(winner, 1 - winner);
+                        korKezdo = winner;
+                        aktualis = korKezdo;
+                        asztal = [];
+                        lastAttacker = null;
+                        if(!jatekVege()) frissit();
+                    }
+                }, 350);
+            } else {
+                passBtn.style.display = "inline-block";
+                passBtn.disabled = false;
+                roundInfo.textContent = "6 lap az asztalon - van ütőlapod: továbbüthetsz vagy passzolhatsz.";
+            }
+            return;
+        }
+        // Special handling for 8 cards on table: always automatic pass
+        if(asztal.length === 8){
+            roundInfo.textContent = "8 lap az asztalon - automatikus passz.";
+            setTimeout(() => {
+                if(asztal.length === 8){
+                    const winner = lastAttacker !== null ? lastAttacker : korKezdo;
+                    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                    pontok[winner] += points;
+                    roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                    equalDraw(winner, 1 - winner);
+                    korKezdo = winner;
+                    aktualis = korKezdo;
+                    asztal = [];
+                    lastAttacker = null;
+                    if(!jatekVege()) frissit();
+                }
+            }, 350);
+            return;
+        }
+
         if(asztal.length === 1){
             roundInfo.textContent = "Válasszon lapot a másik játékos!";
         } else if(asztal.length === 2){
