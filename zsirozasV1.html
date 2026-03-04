@@ -94,6 +94,11 @@ body {
     <div id="roundInfo" style="margin-top:4px; font-style:italic;"></div>
 </div>
 
+
+<!--a játékos saját kártyái látszanak egyedül, illetve az asztal.
+    Ezek azok az informáicók, amit meg kell jeleníteni.
+    Amit nem kell -> display: none-->
+
 <h3>Játékos 1</h3>
 <div class="hand" id="hand0"></div>
 
@@ -104,7 +109,7 @@ body {
 </div>
 
 <h3>Játékos 2</h3>
-<div class="hand" id="hand1"></div>
+<div class="hand" id="hand1" style="display: none;"></div>
 
 <script>
 const szinek = ["zöld","szív","tök","makk"];
