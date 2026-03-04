@@ -216,7 +216,7 @@
         let nev;
         let upd;
 		let url = "https://wexen.hu/api/jatekApi";
-
+		let isHost = false;
 		let inditas = document.getElementById("inditas")
 
     function kiir()
@@ -283,7 +283,8 @@
 				
 				if(jatekosok[0].name == nev && readyjatekosok.length >= data.user.maxPlayerCount)
 				{
-					inditas.innerHTML = `<button class='button-with-icon' id="inditasGomb" onclick='indit()'>Indítás</button>`
+					isHost = true;
+					inditas.innerHTML = `<button class='button-with-icon' id="inditasGomb" onclick='indit()'>Indítás</button>`;
 
 				}
 
@@ -363,7 +364,7 @@
 		const nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 
-		fetch(`https://wexen.hu/api/jatekApi/zsirozas/player/${nev}/${kod}`,{method:"DELETE",body:JSON.stringify({ name: playername })})
+		fetch(`${url}/zsirozas/player/${nev}/${kod}`,{method:"DELETE",body:JSON.stringify({ name: playername })})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -384,15 +385,19 @@
         setInterval(loginGet(),1000)
     }
 
+
 	function indit()
 	{
-		let hely = window.location.href
+
+		console.log(window.location.href)
 		
-		console.log(hely.split("/"))
 
-		let jatekHely = `${hely[0]}/${hely[2]}/${hely[3]}/zsirozas/zsirozasV1.html`
+		window.location.href = "zsirozasV1.html?nev="+nev+"&"
 
-		window.location.href = jatekHely
+		console.log(readyjatekosok.name == nev)
+		{
+			console.log("indulj!")
+		}
 
 	}
 
