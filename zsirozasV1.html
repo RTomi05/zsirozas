@@ -136,9 +136,9 @@ let pakli = [];
 let kezek = [[], []];
 let asztal = [];
 let aktualis = 0;
-let korKezdo = 1;
+let korKezdo = Math.floor(Math.random() * 2);
 let pontok = [0, 0];
-let lastAttacker = null; // tracks who played the last successful hit
+let lastAttacker = null;
 const MAX_PONTOK = 80;
 
 function kartyaPont(c){
