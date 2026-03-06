@@ -235,17 +235,19 @@ function passz(){
         }
     }
     
-    // Check if current player has a valid hit card
+    // Check if current player has a valid hit card against the ÜTŐLAP (first card on table)
+    const winner = 1 - korKezdo;
     const last = asztal[asztal.length - 1];
-    let hasValid = vanUtolapja(aktualis, last);
+    let hasValid = false;
+    if(asztal.length > 0) {
+        hasValid = vanUtolapja(aktualis, asztal[0]); // use first card as ütőlap
+    }
     
     // New rule: cannot choose pass if the current player has no valid hit
     if(!hasValid) {
         return;
     }
     
-    
-    const winner = 1 - korKezdo;
     const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
     pontok[winner] += points;
     
@@ -438,7 +440,8 @@ function frissit(){
         const autoPassSeven = isDoubleSeven && !hasSevenInHand;
         const equalHands = kezek[0].length === kezek[1].length;
         const anyEmptyHands = kezek[0].length === 0 || kezek[1].length === 0;
-        let hasValid = vanUtolapja(aktualis, asztal[1]);
+        // New: compute validity by explicitly checking for same value or a seven in hand
+        let hasValid = kezek[aktualis].some(c => c.v === asztal[1].v || c.v === "7");
         if(autoPassSeven) {
             hasValid = false;
         }
@@ -492,7 +495,7 @@ function frissit(){
                 "Nincs hetese - kötelező tenni, majd automatikus passz." :
                 "Nincs ütőlap - kötelező tenni, majd automatikus passz.";
             setTimeout(() => {
-                if(asztal.length === 2 && aktualis === korKezdo && !vanUtolapja(aktualis, asztal[1])){
+                if(asztal.length === 2 && aktualis === korKezdo && !kezek[aktualis].some(c => c.v === asztal[1].v || c.v === "7")){
                     // force the current player to put their first available card
                     if(kezek[aktualis].length > 0){
                         const forced = kezek[aktualis].shift();
@@ -524,8 +527,11 @@ function frissit(){
         // otherwise allow manual pass via button.
         if(asztal.length === 4){
             const last = asztal[asztal.length - 1];
-            const hasValid = vanUtolapja(aktualis, last);
-            if(!hasValid){
+            // New validity check: match against the ütőlap (first card) or a seven in hand
+            const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+            const hasValid = asztal.length > 0 ? vanUtolapja(aktualis, asztal[0]) : false; // check first card
+            const lastIsSevenNoHit = asztal[0] && asztal[0].v === "7" && !hasValid && !hasSevenInHand;
+            if(!hasValid || lastIsSevenNoHit){
                 roundInfo.textContent = "Nincs ütőlapod a 4 lapon - automatikus passz.";
                 setTimeout(() => {
                     if(asztal.length === 4){
@@ -552,8 +558,10 @@ function frissit(){
         // otherwise allow manual pass via button.
         if(asztal.length === 6){
             const last = asztal[asztal.length - 1];
-            const hasValid = vanUtolapja(aktualis, last);
-            if(!hasValid){
+            const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+            const hasValid = asztal.length > 0 ? vanUtolapja(aktualis, asztal[0]) : false; // check first card
+            const lastIsSevenNoHit = asztal[0] && asztal[0].v === "7" && !hasValid && !hasSevenInHand;
+            if(!hasValid || lastIsSevenNoHit){
                 roundInfo.textContent = "Nincs ütőlapod a 6 lapon - automatikus passz.";
                 setTimeout(() => {
                     if(asztal.length === 6){
@@ -607,7 +615,32 @@ function frissit(){
                 roundInfo.textContent = "Nem ütés, a kör kezdője viszi a lapokat!";
             }
         } else if(asztal.length %2 !== 0 && asztal.length > 0){
-            roundInfo.textContent = "Tegyél még egy lapot! "; //(4. lapos, utolsó lap, bármit tehetsz)
+            // New rule: if last card is seven and the current player has neither a matching card nor a seven,
+            // then if the number of cards on table is even this was already handled above; if odd, only auto-pass
+            // when both hands have the same number of cards.
+            const last = asztal[asztal.length - 1];
+            const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+            const hasValid = asztal.length > 0 ? vanUtolapja(aktualis, asztal[0]) : false; // check first card (ütőlap)
+            const equalHands = kezek[0].length === kezek[1].length;
+            if(last.v === "7" && !hasValid && !hasSevenInHand && equalHands){
+                roundInfo.textContent = "Hetes az utolsó lap és nincs ütőlapod vagy hetesed - automatikus passz.";
+                setTimeout(() => {
+                    if(asztal.length %2 !== 0){
+                        const winner = 1 - korKezdo;
+                        const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                        pontok[winner] += points;
+                        roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                        equalDraw(winner, 1 - winner);
+                        korKezdo = winner;
+                        aktualis = korKezdo;
+                        asztal = [];
+                        lastAttacker = null;
+                        if(!jatekVege()) frissit();
+                    }
+                }, 350);
+            } else {
+                roundInfo.textContent = "Tegyél még egy lapot! ";
+            }
         } else if(asztal.length === 0){
             roundInfo.textContent = "Új kör kezdődik.";
         }
