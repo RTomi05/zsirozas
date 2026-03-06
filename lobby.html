@@ -288,6 +288,9 @@
 
 				}
 
+				//readyNevek = readyjatekosok.filter(e => e.readyState == "ready").
+				//console.log(readyNevek)
+
 				});
         
         //loginGe
@@ -390,15 +393,31 @@
 	{
 
 		console.log(window.location.href)
-		
 
-		window.location.href = "zsirozasV1.html?nev="+nev+"&"
+		console.log(readyjatekosok)
 
-		console.log(readyjatekosok.name == nev)
-		{
-			console.log("indulj!")
-		}
 
+		let adat = "start"
+
+		const nev=document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
+		if(nev=="" || jatek=="") return;
+
+		const jatekData=document.getElementById("dataText").value;
+		fetch(`${url}/turn/${nev}/${kod}`,{method:"POST",body:JSON.stringify({data:adat})})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					console.log(data.error)
+				}
+				else
+				{
+					console.log(`current user:  ${data.user.players[data.user.currentPlayer].name}(${data.user.currentPlayer})`)
+					console.log(`<br>data:  ${JSON.stringify(data.data)}`)
+				}	
+			})
 	}
 
 
