@@ -211,6 +211,7 @@
 		let readyjatekosok = [];
 		let jatekosok = [];
         let maxJatekos= 0;
+
         let playerszam = 0;
 		let readyszam = 0;
         let nev;
@@ -218,6 +219,9 @@
 		let url = "https://wexen.hu/api/jatekApi";
 		let isHost = false;
 		let inditas = document.getElementById("inditas")
+
+		let nevek = [];
+
 
     function kiir()
     {
@@ -235,7 +239,7 @@
 		if(nev=="" || kod=="") return;
 
 		maxJatekos=document.getElementById("jatekosSzam").value;
-
+		
 		fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
 			.then(r=>r.json())
 			.then(data=>{
@@ -279,6 +283,9 @@
 					console.log(data.user.players.readyState);
 					readyjatekosok = data.user.players.filter(x => x.readyState == "ready")
 					console.log(readyjatekosok)
+
+					maxJatekos = data.user.maxPlayerCount
+					//console.log(maxJatekos)
 				}
 				
 				if(jatekosok[0].name == nev && readyjatekosok.length >= data.user.maxPlayerCount)
@@ -343,7 +350,9 @@
 		nev = document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 
-		fetch(`${url}/zsirozas/player/${nev}/${kod}`,{method:"PUT",body:JSON.stringify({ name: playername })})
+		if(readyjatekosok.length < maxJatekos)
+		{
+			fetch(`${url}/zsirozas/player/${nev}/${kod}`,{method:"PUT",body:JSON.stringify({ name: playername })})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -356,6 +365,12 @@
 					userList(data.user.players);
 				}				
 			});
+		}
+		else
+		{
+			alert("Elkéstél öcsipox!")
+		}
+
 		
 		
 		
@@ -401,9 +416,9 @@
 
 		const nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
-		if(nev=="" || jatek=="") return;
+		if(nev=="" || kod=="") return;
 
-		const jatekData=document.getElementById("dataText").value;
+		//const jatekData=document.getElementById("dataText").value;
 		fetch(`${url}/turn/${nev}/${kod}`,{method:"POST",body:JSON.stringify({data:adat})})
 			.then(r=>r.json())
 			.then(data=>{
@@ -414,10 +429,11 @@
 				}
 				else
 				{
-					console.log(`current user:  ${data.user.players[data.user.currentPlayer].name}(${data.user.currentPlayer})`)
-					console.log(`<br>data:  ${JSON.stringify(data.data)}`)
+					console.log(adat)
 				}	
 			})
+
+		
 	}
 
 
