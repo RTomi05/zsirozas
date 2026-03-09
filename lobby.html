@@ -162,7 +162,7 @@
 
 </head>
 
-<body class="bg-secondary ">
+<body class="bg-secondary " onload="kiir()">
 
     <div class="container col-lg-12 bg-dark" id="foBlokk">
         <div class="row">
@@ -178,7 +178,7 @@
                 </div>
                 <div class="col-lg-6 input-group md-3">
                     <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
-                    <input type="range" id="jatekosSzam" class="my-2" onchange="kiir()" min="1" max="4">
+                    <input type="range" id="jatekosSzam" class="my-2" onchange="kiir()" min="2" max="4">
                     <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
                 </div>
                 <div class="col-lg-6 input-group md-1 mb-4">
@@ -282,9 +282,15 @@
 					console.log(jatekosok)
 					console.log(data.user.players.readyState);
 					readyjatekosok = data.user.players.filter(x => x.readyState == "ready")
+
 					console.log(readyjatekosok)
 
 					maxJatekos = data.user.maxPlayerCount
+
+					if(data.data == "start")
+					{
+						window.location.href = "zsirozasV1.html"
+					}
 					//console.log(maxJatekos)
 				}
 				
@@ -419,7 +425,8 @@
 		if(nev=="" || kod=="") return;
 
 		//const jatekData=document.getElementById("dataText").value;
-		fetch(`${url}/turn/${nev}/${kod}`,{method:"POST",body:JSON.stringify({data:adat})})
+		
+		fetch(`${url}/zsirozas/turn/${nev}/${kod}`,{method:"POST",body:JSON.stringify({data:adat})})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
