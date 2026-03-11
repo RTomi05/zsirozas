@@ -290,7 +290,7 @@
 
 					maxJatekos = data.user.maxPlayerCount
 					//console.log(readyjatekosok.some(e => e.name === nev))
-					if(data.data == "start" && readyjatekosok.contains(nev))
+					if(data.data == "start" && readyjatekosok.includes(nev))
 					{
 						window.location.replace(`zsirozasV1.html?nev=${nev}&kod=${kod}`)
 					}
