@@ -216,7 +216,7 @@
 		let readyszam = 0;
         let nev;
         let upd;
-		let url = "https://wexen.hu/api/jatekApi";
+		let url = "https://pepa.hu/api/jatekApi";
 		let isHost = false;
 		let inditas = document.getElementById("inditas")
 
@@ -282,17 +282,17 @@
 					userList(data.user.players);
 					jatekosok = data.user.players;
 					playerszam = jatekosok.length;
-					console.log(jatekosok)
+					console.log(jatekosok);
 					console.log(data.user.players.readyState);
-					readyjatekosok = data.user.players.filter(x => x.readyState == "ready")
+					readyjatekosok = data.user.players.filter(x => x.readyState == "ready").map(user => user.name);
 
-					console.log(readyjatekosok)
+					console.log(readyjatekosok);
 
 					maxJatekos = data.user.maxPlayerCount
 					//console.log(readyjatekosok.some(e => e.name === nev))
-					if(data.data == "start" && readyjatekosok.some(e => e.name === nev))
+					if(data.data == "start" && readyjatekosok.contains(nev))
 					{
-						window.location.href = "zsirozasV1.html"
+						window.location.replace(`zsirozasV1.html?nev=${nev}&kod=${kod}`)
 					}
 					//console.log(maxJatekos)
 				}
