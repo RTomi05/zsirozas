@@ -162,12 +162,12 @@
 
 </head>
 
-<body class="bg-secondary " onload="kiir()">
+<body class="bg-secondary">
 
     <div class="container col-lg-12 bg-dark" id="foBlokk">
         <div class="row">
                 <div class="col-lg-6">
-                <h1 class="text-light">Játék létrehozása</h1>
+                <h1 class="text-light">Csatlakozás játékhoz</h1>
                 <div class="col-6 input-group md-3">   
                     <label for="nev" class="text-light py-2 m-1">Név:</label>
                     <input type="text" id="nev" class="my-2">
@@ -178,15 +178,12 @@
                 </div>
                 <div class="col-lg-6 input-group md-3">
                     <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
-                    <input type="range" id="jatekosSzam" class="my-2" onchange="kiir()" min="2" max="4">
                     <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
                 </div>
                 <div class="col-lg-6 input-group md-1 mb-4">
                     <button onclick="kuld()" id="belepes">Belépés</button>
                     <button onclick="loginGet()">Frissít</button>
 				
-                </div>
-				<div class="col-lg-6 input-group md-1 mb-4" id="inditas">
                 </div>
             </div>
             <div class="col-lg-6" id="userBlokk">
@@ -197,28 +194,7 @@
 
             </div>
         </div>
-		<div class="row col-lg-6">
-			<div class="col-lg-6">
-                <h1 class="text-light">Csatlakozás játékhoz</h1>
-                <div class="col-6 input-group md-3">   
-                    <label for="nev" class="text-light py-2 m-1">Név:</label>
-                    <input type="text" id="nev" class="my-2">
-                </div>
-                <div class="col-lg-6 input-group md-3">
-                    <label for="kod" class="text-light py-2 m-1">Kód:</label>
-                    <input type="text" id="kod" class="my-2">
-                </div>
-                <!--<div class="col-lg-6 input-group md-3">
-                    <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
-                    <input type="range" id="jatekosSzam" class="my-2" onchange="kiir()" min="2" max="4">
-                    <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
-                </div>-->
-                <div class="col-lg-6 input-group md-1 mb-4">
-                    <button onclick="kuld()" id="belepes">Csatlakozás</button>
-                    <button onclick="loginGet()">Frissít</button>
 
-                </div>
-		</div>
         
 
     </div>
@@ -235,7 +211,7 @@
         let upd;
 		let url = "https://pepa.hu/api/jatekApi";
 		let isHost = false;
-		let inditas = document.getElementById("inditas")
+		//let inditas = document.getElementById("inditas")
 
 
 		
@@ -251,16 +227,15 @@
 
 	function kuld()
 	{
-		inditas.innerHTML = "";
+		//inditas.innerHTML = "";
         let userek = document.getElementById("userek");
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
 
 		if(nev=="" || kod=="") return;
 
-		maxJatekos=document.getElementById("jatekosSzam").value;
-		
-		fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
+	
+		fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod})})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -462,10 +437,6 @@
 
 		
 	}
-
-
-	
-
 
 
     </script>

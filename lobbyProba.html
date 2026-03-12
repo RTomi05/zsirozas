@@ -169,12 +169,12 @@
                 <div class="col-lg-6">
                 <h1 class="text-light">Játék létrehozása</h1>
                 <div class="col-6 input-group md-3">   
-                    <label for="nev" class="text-light py-2 m-1">Név:</label>
-                    <input type="text" id="nev" class="my-2">
+                    <label for="nevHost" class="text-light py-2 m-1">Név:</label>
+                    <input type="text" id="nevHost" class="my-2">
                 </div>
                 <div class="col-lg-6 input-group md-3">
-                    <label for="kod" class="text-light py-2 m-1">Kód:</label>
-                    <input type="text" id="kod" class="my-2">
+                    <label for="kodHost" class="text-light py-2 m-1">Kód:</label>
+                    <input type="text" id="kodHost" class="my-2">
                 </div>
                 <div class="col-lg-6 input-group md-3">
                     <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
@@ -232,6 +232,7 @@
         let playerszam = 0;
 		let readyszam = 0;
         let nev;
+		let nevHost;
         let upd;
 		let url = "https://pepa.hu/api/jatekApi";
 		let isHost = false;
@@ -253,14 +254,21 @@
 	{
 		inditas.innerHTML = "";
         let userek = document.getElementById("userek");
-		nev=document.getElementById("nev").value;
-		const kod=document.getElementById("kod").value;
+		nevHost = document.getElementById("nevHost").value;
+		const kodHost = document.getElementById("kodHost").value;
 
-		if(nev=="" || kod=="") return;
+		nev = document.getElementById("nev").value;
+		const kod = document.getElementById("kod").value;
+
+		
+
+		//if(nev=="" || kod=="") return;
 
 		maxJatekos=document.getElementById("jatekosSzam").value;
 		
-		fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
+		if(nevHost == "" || kodHost=="")
+		{
+			fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -276,6 +284,27 @@
 			});
         playerszam++;
         console.log(playerszam)
+		}
+		else
+		{
+			fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nevHost, code: kodHost, maxJatekos:0 })})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					console.log(data.error);
+				}
+				else
+				{
+                    userList(data.user.players)
+
+				}				
+			});
+        	playerszam++;
+        	console.log(playerszam)
+		}
+
         //upd= setInterval(function(){loginGet()},2000)
 
 		
@@ -285,8 +314,14 @@
 	{
 		nev=document.getElementById("nev").value;
 		const kod=document.getElementById("kod").value;
-		if(nev=="" || kod=="") return;
-		fetch(`${url}/zsirozas/lobby/${nev}/${kod}`)
+
+		nevHost = document.getElementById("nevHost").value;
+		const kodHost = document.getElementById("kodHost").value;
+
+
+		if(nev=="" || kod=="")
+		{
+			fetch(`${url}/zsirozas/lobby/${nevHost}/${kodHost}`)
 			.then(r=>r.json())
 			.then(data=>{
 				console.log(data);
@@ -325,6 +360,51 @@
 				//console.log(readyNevek)
 
 				});
+        
+		}
+		else
+		{
+			fetch(`${url}/zsirozas/lobby/${nev}/${kod}`)
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					document.getElementById("userek").innerHTML=data.error;
+				}
+				else
+				{
+					userList(data.user.players);
+					jatekosok = data.user.players;
+					playerszam = jatekosok.length;
+					console.log(jatekosok);
+					console.log(data.user.players.readyState);
+					readyjatekosok = data.user.players.filter(x => x.readyState == "ready").map(user => user.name);
+
+					console.log(readyjatekosok);
+
+					maxJatekos = data.user.maxPlayerCount
+					//console.log(readyjatekosok.some(e => e.name === nev))
+					if(data.data == "start" && readyjatekosok.includes(nev))
+					{
+						window.location.replace(`zsirozasV1.html?nev=${nev}&kod=${kod}`)
+					}
+					//console.log(maxJatekos)
+				}
+				
+				if(jatekosok[0].name == nev && readyjatekosok.length >= data.user.maxPlayerCount)
+				{
+					isHost = true;
+					inditas.innerHTML = `<button class='button-with-icon' id="inditasGomb" onclick='indit()'>Indítás</button>`;
+
+				}
+
+				//readyNevek = readyjatekosok.filter(e => e.readyState == "ready").
+				//console.log(readyNevek)
+
+				});
+		}
+
         
         //loginGe
 		
@@ -395,6 +475,7 @@
 		else
 		{
 			alert("Elkéstél öcsipox!")
+			console.log(readyjatekosok.length,maxJatekos)
 		}
 
 		
