@@ -22,7 +22,7 @@
 		cursor: pointer;
 		display: inline-flex;
 		font-family: system-ui,-apple-system,system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;
-		font-size: 20px;
+		font-size: 25px;
 		font-weight: 600;
 		justify-content: center;
 		line-height: 1.25;
@@ -64,11 +64,11 @@
 		border-radius: .25rem;
 		box-shadow: rgba(0, 0, 0, 0.02) 0 1px 3px 0;
 		box-sizing: border-box;
-		color: rgba(0, 0, 0, 0.85);
+		color: rgba(255, 255, 255, 0.85);
 		cursor: pointer;
 		display: inline-flex;
 		font-family: system-ui,-apple-system,system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;
-		font-size: 20px;
+		font-size: 25px;
 		font-weight: 600;
 		justify-content: center;
 		line-height: 1.25;
@@ -101,7 +101,25 @@
 		color: rgba(0, 0, 0, 0.65);
 		transform: translateY(0);
 		}
+
+		#foBlokk
+		{
+			border-radius:10px;
+		}
 		
+		html, body {
+    		margin: 0;
+    		padding: 0;
+    		min-height: 100%;
+		}
+
+		body
+		{
+			background-image: url(./hatter.png);
+			background-repeat: no-repeat;
+			background-size: cover;
+			background-position: center;
+		}
 
     </style>
 
@@ -109,18 +127,6 @@
 
 <body class="bg-secondary ">
 
-    <!--<div class="container col-lg-12 bg-dark" id="foBlokk">
-        <div class="row-4">
-				<div class="col-lg-6 h-100">
-					<button onclick="kuld()" id="belepes" class="h-100">Csatlakozás</button>
-				</div>
-				<div class="col-lg-6">
-					<button onclick="kuld()" id="belepes">Csatlakozás</button>
-				</div>
-
-
-        </div>
-    </div>-->
 	<div class="container col-lg-12 bg-dark d-flex justify-content-between align-items-center" id="foBlokk" style="height:200px;">
     
     <button onclick="betoltHost()" id="belepesHost" class="btn w-50 h-50">
@@ -132,6 +138,13 @@
     </button>
 
 	</div>
+
+	<div class="container col-12 bg-dark align-items-center mt-5 mb-5 text-white" id="foBlokk" style="height:200px;">
+		<h1>Zsírozás</h1>
+		<p>A zsírozás (más néven hetes) egyszerű, népszerű kártyajáték, normál esetben ketten vagy négyen játsszák magyar kártyával, de páratlan, valamint több pakli felhasználásával tulajdonképpen korlátlan számú résztvevővel is játszható. A játék célja, hogy minél több „zsírt” (ászt vagy tízest) gyűjtsünk össze az ütéseinkkel a játék során. A játékban nincs aduszín és a két zsírt kivéve, amik tíz-tíz pontot érnek, a lapoknak nincs pontértékére, rangsora. A zsírozás kevésbé ismert neve, a hetes arra utal, hogy a játékban az egyébként értéktelen hetes lappal bármelyik másik lapot fogni lehet.</p>
+	</div>
+
+	<footer class="col-12 bg-dark" id="lablec">Szia Lajos</footer>
 
 	<script>
 
