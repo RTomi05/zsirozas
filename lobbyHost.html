@@ -212,7 +212,7 @@
 		let readyszam = 0;
         let nev;
         let upd;
-		let url = "https://pepa.hu/api/jatekApi";
+		let url = "https://wexen.hu/api/jatekApi";
 		let isHost = false;
 		let inditas = document.getElementById("inditas")
 
@@ -255,7 +255,7 @@
 			});
         playerszam++;
         console.log(playerszam)
-        //upd= setInterval(function(){loginGet()},2000)
+        upd= setInterval(function(){loginGet()},5000)
 
 		
 	}
@@ -288,7 +288,7 @@
 					//console.log(readyjatekosok.some(e => e.name === nev))
 					if(data.data == "start" && readyjatekosok.includes(nev))
 					{
-						window.location.replace(`zsirozasV1.html?nev=${nev}&kod=${kod}`)
+						window.location.replace(`zsirozasV1.html?nev=${nev}&kod=${kod}&maxJatekos=${maxJatekos}`)
 					}
 					//console.log(maxJatekos)
 				}
