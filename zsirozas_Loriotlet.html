@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+    background:#063;
+    font-family: Arial;
+    color:white;
+}
+
+.hand, .table {
+    display:flex;
+    gap:10px;
+    margin:10px 0;
+    flex-wrap: wrap;
+}
+
+
+.card {
+    width:200px;
+    height:280px;
+    border-radius:10px;
+    cursor:pointer;
+    border:2px solid transparent;
+}
+
+.card img {
+    width:100%;
+    height:100%;
+    border-radius:10px;
+}
+
+.card:hover {
+    border: 3px solid blue;
+}
+
+.disabled {
+    opacity:0.4;
+    pointer-events:none;
+}
+
+.area {
+    background:#0005;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:20px;
+}
+
+.table-area {
+    position: relative;
+    display: flex;
+    align-items: center;  
+}
+
+.table-area .table {
+    flex: 1 1 auto;
+}
+
+#passBtn {
+    height: 60px;
+    width: 120px;
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding:8px 14px;
+    background:#ffffff;
+    border:none;
+    border-radius:5px;
+    color:rgb(0, 0, 0);
+    font-weight:bold;
+    cursor:pointer;
+    display: none; 
+    z-index: 10;
+    margin-left: 500px;
+}
+    </style>
+</head>
+<body>
+    <h1>Zsírozás - Projektmunka</h1>
+    <h1>MOST MÁR NEM TUDSZ HÜLYESÉGET RAKNI! (DE AZÉRT NE PRÓBÁLD MEG)</h1>
+    <h1 id="jatekVegeKiir" style="text-align: center;"></h1>
+    <h1 id="gyoztesKiir" style="text-align: center;"></h1>
+    <h1 id="pontokAVegen" style="text-align: center;"></h1>
+    <div class="area">
+        <b>Aktív játékos:</b> <span id="player"></span>
+    
+        <div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/8)</div>
+        <div id="roundInfo" style="margin-top:4px; font-style:italic;"></div>
+    </div>
+
+
+    <h3>Asztal</h3>
+    <div class="table-area">
+        <div class="table" id="table"></div>
+        <button id="passBtn" class="passzbtn" onclick="passz()">Passz</button>
+    </div>
+
+    <h3>Kártyáid</h3>
+    <div class="hand" id="hand"></div>
+
+    <script>
+
+        
+        const kartyak = ["level7","level8","level9","level10","levelalso","levelfelso","levelkiraly","levelasz",
+                "makk7","makk8","makk9","makk10","makkalso","makkfelso","makkkiraly","makkasz",
+                "sziv7","sziv8","sziv9","sziv10","szivalso","szivfelso","szivkiraly","szivasz",
+                "tok7","tok8","tok9","tok10","tokalso","tokfelso","tokkiraly","tokasz"]
+
+        let kez =[];
+
+
+        function oszt()
+        {
+            let osztott = [];
+            let sorsolt = "";
+
+            for(let i = 0;i < 4;i++)
+            {
+                sorsolt = kartyak[Math.round(Math.random()*kartyak.length)];
+                
+                let kartya = document.createElement("div")
+                kartya.className = "card";
+
+                if(!osztott.includes(sorsolt))
+                {
+                    console.log("joo",sorsolt)
+                    osztott.push(sorsolt);
+                    let kep = document.createElement("img");
+                    kep.src = `./kartyak/${sorsolt}.png`;
+                    kartya.appendChild(kep);
+                    sorsolt = "";
+                }
+                else
+                {
+                    sorsolt = kartyak[Math.random()*kartyak.length];
+                }
+
+                document.getElementById("hand").appendChild(kartya);
+
+            }
+
+            kez = osztott;
+            console.log(kez)
+
+            kartyak.forEach(e => 
+            {
+                if(kez.includes(e))
+                {   
+                    kartyak.pop(e)
+                }
+            });
+            
+            console.log(kartyak)
+
+
+        }
+
+        
+        
+        oszt();
+        </script>
+</body>
+</html>

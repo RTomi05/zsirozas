@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Zsírozás - Kliens</title>
+
+<style>
+body {
+    background:#063;
+    font-family: Arial;
+    color:white;
+}
+
+.hand, .table {
+    display:flex;
+    gap:10px;
+    margin:10px 0;
+    flex-wrap: wrap;
+    min-height: 280px; /* Hogy ne ugorjon a layout, ha üres */
+}
+
+.card {
+    width:200px;
+    height:280px;
+    border-radius:10px;
+    cursor:pointer;
+    border:2px solid transparent;
+    transition: transform 0.2s;
+}
+
+.card img {
+    width:100%;
+    height:100%;
+    border-radius:10px;
+    pointer-events: none; /* Ne lehessen a képet magát húzni */
+}
+
+/* Saját lapoknál hover effekt */
+#myHand .card:hover {
+    border: 3px solid #00a8ff;
+    transform: translateY(-10px);
+}
+
+.card-back {
+    background: repeating-linear-gradient(45deg, #1a2a6c, #1a2a6c 10px, #2a3a7c 10px, #2a3a7c 20px);
+    border-radius: 10px;
+    border: 2px solid #fff3;
+    cursor: default;
+}
+
+.disabled {
+    opacity:0.5;
+    pointer-events:none;
+}
+
+.area {
+    background:#0005;
+    padding:15px;
+    border-radius:8px;
+    margin-bottom:20px;
+}
+
+.table-area {
+    position: relative;
+    display: flex;
+    align-items: center;  
+    background: #0003;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.table-area .table {
+    flex: 1 1 auto;
+    justify-content: center;
+}
+
+#passBtn {
+    height: 60px;
+    width: 120px;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding:8px 14px;
+    background:#ffffff;
+    border:none;
+    border-radius:5px;
+    color:rgb(0, 0, 0);
+    font-size: 16px;
+    font-weight:bold;
+    cursor:pointer;
+    display: none; 
+    z-index: 10;
+}
+
+#passBtn:hover {
+    background: #e0e0e0;
+}
+</style>
+</head>
+
+<body>
+
+<h1 style="text-align: center;">Zsírozás - Multiplayer Kliens</h1>
+
+<div class="area">
+    <h2 id="turnIndicator" style="margin-top:0; color: #ffd700;">Várakozás a szerverre...</h2>
+    <div id="scores" style="font-size: 18px;">Saját pont: 0 — Ellenfél pont: 0</div>
+    <div id="roundInfo" style="margin-top:8px; font-style:italic; color: #aaa;">Csatlakozás folyamatban...</div>
+</div>
+
+<h3>Ellenfél lapjai</h3>
+<div class="hand" id="opponentHand"></div>
+
+<h3>Asztal</h3>
+<div class="table-area">
+    <div class="table" id="table"></div>
+    <button id="passBtn" onclick="kattintasPassz()">Passz</button>
+</div>
+
+<h3>Saját lapjaim</h3>
+<div class="hand" id="myHand"></div>
+
+<script>
+// --- KONFIGURÁCIÓ ÉS SEGÉDFÜGGVÉNYEK ---
+const szinDict = { "zöld": "level", "szív": "sziv", "tök": "tok", "makk": "makk" };
+const ertekDict = { "7":"7", "8":"8", "9":"9", "10":"10", "alsó":"also", "felső":"felso", "király":"kiraly", "ász":"asz" };
+
+function kartyakep(s, v){
+    return `kartyak/${szinDict[s]}${ertekDict[v]}.png`;
+}
+
+// --- KLIENS ÁLLAPOT (Ezt kizárólag a szerver frissíti!) ---
+let jatekAllapot = {
+    enKovetkezem: false,
+    sajatKez: [],         // Objektumok tömbje: [{s: "makk", v: "7"}, ...]
+    asztal: [],           // Objektumok tömbje a lerakott lapokkal
+    ellenfelLapokSzama: 0, // Csak egy szám, nem tudjuk mik a lapjai!
+    sajatPont: 0,
+    ellenfelPont: 0,
+    passzGombLathato: false,
+    uzenetHelyzet: "Várakozás a másik játékosra...",
+    uzenetReszlet: ""
+};
+
+// --- HÁLÓZATI KOMMUNIKÁCIÓ (IDE KÖSD BE A WEBSOCKETET) ---
+
+// 1. Ezt hívd meg, amikor üzenet jön a szervertől (pl. socket.on('allapot_frissites', (data) => ...))
+function allapotFrissitesASzervertol(ujAllapotMinta) {
+    jatekAllapot = { ...jatekAllapot, ...ujAllapotMinta };
+    render();
+}
+
+// 2. Ez küldi az adatot a szervernek (pl. socket.emit('jatek_akcio', ...))
+function kuldesSzervernek(akcioTipus, adatObjektum) {
+    console.log("KÜLDÉS A SZERVERNEK:", akcioTipus, adatObjektum);
+    // TODO: Itt implementáld a tényleges küldést!
+    // socket.emit(akcioTipus, adatObjektum);
+}
+
+
+// --- FELHASZNÁLÓI INTERAKCIÓK ---
+
+function kattintasLapra(lapIndex) {
+    if (!jatekAllapot.enKovetkezem) {
+        // Opcionális: kis vizuális visszajelzés, ha nem ő jön
+        console.log("Nem te következel!");
+        return;
+    }
+    kuldesSzervernek("LAP_LERAKAS", { index: lapIndex });
+}
+
+function kattintasPassz() {
+    if (!jatekAllapot.enKovetkezem || !jatekAllapot.passzGombLathato) return;
+    kuldesSzervernek("PASSZ", {});
+}
+
+
+// --- MEGJELENÍTÉS (RENDERELÉS) ---
+
+function render() {
+    // 1. Fejléc információk
+    const turnInd = document.getElementById("turnIndicator");
+    turnInd.textContent = jatekAllapot.enKovetkezem ? "TE KÖVETKEZEL!" : "Az ellenfél lépésére várunk...";
+    turnInd.style.color = jatekAllapot.enKovetkezem ? "#00ff00" : "#ffd700";
+
+    document.getElementById("scores").textContent = `Saját pont: ${jatekAllapot.sajatPont} — Ellenfél pont: ${jatekAllapot.ellenfelPont}`;
+    document.getElementById("roundInfo").textContent = jatekAllapot.uzenetReszlet || jatekAllapot.uzenetHelyzet;
+
+    // 2. Passz gomb állapota
+    const passBtn = document.getElementById("passBtn");
+    if (jatekAllapot.passzGombLathato && jatekAllapot.enKovetkezem) {
+        passBtn.style.display = "block";
+    } else {
+        passBtn.style.display = "none";
+    }
+
+    // 3. Ellenfél lapjainak rajzolása (csak hátlapok!)
+    const oppHand = document.getElementById("opponentHand");
+    oppHand.innerHTML = "";
+    for (let i = 0; i < jatekAllapot.ellenfelLapokSzama; i++) {
+        const d = document.createElement("div");
+        d.className = "card card-back";
+        oppHand.appendChild(d);
+    }
+
+    // 4. Asztal rajzolása
+    const tableDiv = document.getElementById("table");
+    tableDiv.innerHTML = "";
+    jatekAllapot.asztal.forEach(c => {
+        const d = document.createElement("div");
+        d.className = "card";
+        const img = document.createElement("img");
+        img.src = kartyakep(c.s, c.v);
+        d.appendChild(img);
+        tableDiv.appendChild(d);
+    });
+
+    // 5. Saját lapok rajzolása
+    const myHandDiv = document.getElementById("myHand");
+    myHandDiv.innerHTML = "";
+    jatekAllapot.sajatKez
