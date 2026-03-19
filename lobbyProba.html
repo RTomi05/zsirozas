@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zsírozás</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <script src="https://code.jquery.com/jquery-4.0.0.js" integrity="sha256-9fsHeVnKBvqh3FB2HYu7g2xseAZ5MlN6Kz/qnkASV8U=" crossorigin="anonymous"></script>
+
+    <style>
+        img
+        {
+            height: 20%;
+            width: 50%;
+        }
+		#foBlokk
+		{
+			border-radius: 15px;
+		}
+		.userBlokk
+		{
+			padding:10px;
+			border:1px solid black;
+			border-collapse: collapse;
+		}
+		
+		.allapotjelolo
+		{
+			padding: 5px;
+			margin:5px;
+			display: inline-block;
+			border-radius: 10px;
+		}
+		.allapotgomb
+		{
+			padding:2px;
+			margin:2px;
+		}
+
+		.ready
+		{
+			border-radius: 0px 10px 10px 0px;
+			margin-left: 2px;
+			padding: 3px;
+		}
+		.ready:hover
+		{
+			background-color: black;
+			color:white;
+			transform: translateY(-1px);
+		}
+		
+		.kick
+		{
+			border-radius: 10px 0px 0px 10px;
+			padding: 3px;
+		}
+
+		.kick:hover
+		{
+			background-color: black;
+			color:white;
+			transform: translateY(-1px);
+		}
+		
+		#belepes {
+		align-items: center;
+		background-color: #FFFFFF;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: .25rem;
+		box-shadow: rgba(0, 0, 0, 0.02) 0 1px 3px 0;
+		box-sizing: border-box;
+		color: rgba(0, 0, 0, 0.85);
+		cursor: pointer;
+		display: inline-flex;
+		font-family: system-ui,-apple-system,system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;
+		font-size: 16px;
+		font-weight: 600;
+		justify-content: center;
+		line-height: 1.25;
+		min-height: 3rem;
+		padding: calc(.87rem - 1px) calc(1.5rem - 1px);
+		text-decoration: none;
+		transition: all 250ms;
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: manipulation;
+		vertical-align: baseline;
+		width: auto;
+		}
+
+		#belepes:hover,
+		#belepes:focus {
+		border-color: rgba(0, 0, 0, 0.15);
+		box-shadow: rgba(0, 0, 0, 0.1) 0 4px 12px;
+		color: rgba(0, 0, 0, 0.65);
+		}
+
+		#belepes:hover {
+		transform: translateY(-1px);
+		}
+
+		#belepes:active {
+		background-color: #F0F0F1;
+		border-color: rgba(0, 0, 0, 0.15);
+		box-shadow: rgba(0, 0, 0, 0.06) 0 2px 4px;
+		color: rgba(0, 0, 0, 0.65);
+		transform: translateY(0);
+		}
+
+		#inditasGomb {
+		align-items: center;
+		background-color: #0e7937;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: .25rem;
+		box-shadow: rgba(0, 0, 0, 0.02) 0 1px 3px 0;
+		box-sizing: border-box;
+		color: rgba(255, 255, 255, 0.85);
+		cursor: pointer;
+		display: inline-flex;
+		font-family: system-ui,-apple-system,system-ui,"Helvetica Neue",Helvetica,Arial,sans-serif;
+		font-size: 16px;
+		font-weight: 600;
+		justify-content: center;
+		line-height: 1.25;
+		min-height: 3rem;
+		padding: calc(.87rem - 1px) calc(1.5rem - 1px);
+		text-decoration: none;
+		transition: all 250ms;
+		user-select: none;
+		-webkit-user-select: none;
+		touch-action: manipulation;
+		vertical-align: baseline;
+		width: auto;
+		}
+
+		#inditasGomb:hover,
+		#inditasGomb:focus {
+		border-color: rgba(0, 0, 0, 0.15);
+		box-shadow: rgba(0, 0, 0, 0.1) 0 4px 12px;
+		color: rgba(0, 0, 0, 0.65);
+		}
+
+		#inditasGomb:hover {
+		transform: translateY(-1px);
+		}
+
+		#inditasGomb:active {
+		background-color: #F0F0F1;
+		border-color: rgba(0, 0, 0, 0.15);
+		box-shadow: rgba(0, 0, 0, 0.06) 0 2px 4px;
+		color: rgba(0, 0, 0, 0.65);
+		transform: translateY(0);
+		
+		}
+
+		
+
+    </style>
+
+</head>
+
+<body class="bg-secondary " onload="kiir()">
+
+    <div class="container col-lg-12 bg-dark" id="foBlokk">
+        <div class="row">
+                <div class="col-lg-6">
+                <h1 class="text-light">Játék létrehozása</h1>
+                <div class="col-6 input-group md-3">   
+                    <label for="nevHost" class="text-light py-2 m-1">Név:</label>
+                    <input type="text" id="nevHost" class="my-2">
+                </div>
+                <div class="col-lg-6 input-group md-3">
+                    <label for="kodHost" class="text-light py-2 m-1">Kód:</label>
+                    <input type="text" id="kodHost" class="my-2">
+                </div>
+                <div class="col-lg-6 input-group md-3">
+                    <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
+                    <input type="range" id="jatekosSzam" class="my-2" onchange="kiir()" min="2" max="4">
+                    <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
+                </div>
+                <div class="col-lg-6 input-group md-1 mb-4">
+                    <button onclick="kuld()" id="belepes">Belépés</button>
+                    <button onclick="loginGet()">Frissít</button>
+				
+                </div>
+				<div class="col-lg-6 input-group md-1 mb-4" id="inditas">
+                </div>
+            </div>
+            <div class="col-lg-6" id="userBlokk">
+                <h1 class="text-light">Lobby</h1>
+                <div class="col-lg-6" id="userek">
+
+                </div>
+
+            </div>
+        </div>
+		<div class="row col-lg-6">
+			<div class="col-lg-6">
+                <h1 class="text-light">Csatlakozás játékhoz</h1>
+                <div class="col-6 input-group md-3">   
+                    <label for="nev" class="text-light py-2 m-1">Név:</label>
+                    <input type="text" id="nev" class="my-2">
+                </div>
+                <div class="col-lg-6 input-group md-3">
+                    <label for="kod" class="text-light py-2 m-1">Kód:</label>
+                    <input type="text" id="kod" class="my-2">
+                </div>
+                <!--<div class="col-lg-6 input-group md-3">
+                    <label for="jatekosSzam" class="text-light py-2 m-1">Játékos szám:</label>
+                    <input type="range" id="jatekosSzam" class="my-2" onchange="kiir()" min="2" max="4">
+                    <label for="jatekosSzam" class="text-light py-2 m-1" id="jatekosSzamkiir"></label>
+                </div>-->
+                <div class="col-lg-6 input-group md-1 mb-4">
+                    <button onclick="kuld()" id="belepes">Csatlakozás</button>
+                    <button onclick="loginGet()">Frissít</button>
+
+                </div>
+		</div>
+        
+
+    </div>
+
+    <script>
+
+		let readyjatekosok = [];
+		let jatekosok = [];
+        let maxJatekos= 0;
+
+        let playerszam = 0;
+		let readyszam = 0;
+        let nev;
+		let nevHost;
+        let upd;
+		let url = "https://pepa.hu/api/jatekApi";
+		let isHost = false;
+		let inditas = document.getElementById("inditas")
+
+
+		
+
+		let nevek = [];
+
+
+    function kiir()
+    {
+        document.getElementById("jatekosSzamkiir").innerHTML = document.getElementById("jatekosSzam").value
+
+    }
+
+	function kuld()
+	{
+		inditas.innerHTML = "";
+        let userek = document.getElementById("userek");
+		nevHost = document.getElementById("nevHost").value;
+		const kodHost = document.getElementById("kodHost").value;
+
+		nev = document.getElementById("nev").value;
+		const kod = document.getElementById("kod").value;
+
+		
+
+		//if(nev=="" || kod=="") return;
+
+		maxJatekos=document.getElementById("jatekosSzam").value;
+		
+		if(nevHost == "" || kodHost=="")
+		{
+			fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nev, code: kod, maxJatekos:maxJatekos })})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					console.log(data.error);
+				}
+				else
+				{
+                    userList(data.user.players)
+
+				}				
+			});
+        playerszam++;
+        console.log(playerszam)
+		}
+		else
+		{
+			fetch(`${url}/zsirozas/player`,{method:"POST",body:JSON.stringify({ name: nevHost, code: kodHost, maxJatekos:0 })})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					console.log(data.error);
+				}
+				else
+				{
+                    userList(data.user.players)
+
+				}				
+			});
+        	playerszam++;
+        	console.log(playerszam)
+		}
+
+        //upd= setInterval(function(){loginGet()},2000)
+
+		
+	}
+
+    function loginGet()
+	{
+		nev=document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
+
+		nevHost = document.getElementById("nevHost").value;
+		const kodHost = document.getElementById("kodHost").value;
+
+
+		if(nev=="" || kod=="")
+		{
+			fetch(`${url}/zsirozas/lobby/${nevHost}/${kodHost}`)
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					document.getElementById("userek").innerHTML=data.error;
+				}
+				else
+				{
+					userList(data.user.players);
+					jatekosok = data.user.players;
+					playerszam = jatekosok.length;
+					console.log(jatekosok);
+					console.log(data.user.players.readyState);
+					readyjatekosok = data.user.players.filter(x => x.readyState == "ready").map(user => user.name);
+
+					console.log(readyjatekosok);
+
+					maxJatekos = data.user.maxPlayerCount
+					//console.log(readyjatekosok.some(e => e.name === nev))
+					if(data.data == "start" && readyjatekosok.includes(nev))
+					{
+						window.location.replace(`zsirozasV1.html?nev=${nev}&kod=${kod}`)
+					}
+					//console.log(maxJatekos)
+				}
+				
+				if(jatekosok[0].name == nev && readyjatekosok.length >= data.user.maxPlayerCount)
+				{
+					isHost = true;
+					inditas.innerHTML = `<button class='button-with-icon' id="inditasGomb" onclick='indit()'>Indítás</button>`;
+
+				}
+
+				//readyNevek = readyjatekosok.filter(e => e.readyState == "ready").
+				//console.log(readyNevek)
+
+				});
+        
+		}
+		else
+		{
+			fetch(`${url}/zsirozas/lobby/${nev}/${kod}`)
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					document.getElementById("userek").innerHTML=data.error;
+				}
+				else
+				{
+					userList(data.user.players);
+					jatekosok = data.user.players;
+					playerszam = jatekosok.length;
+					console.log(jatekosok);
+					console.log(data.user.players.readyState);
+					readyjatekosok = data.user.players.filter(x => x.readyState == "ready").map(user => user.name);
+
+					console.log(readyjatekosok);
+
+					maxJatekos = data.user.maxPlayerCount
+					//console.log(readyjatekosok.some(e => e.name === nev))
+					if(data.data == "start" && readyjatekosok.includes(nev))
+					{
+						window.location.replace(`zsirozasV1.html?nev=${nev}&kod=${kod}`)
+					}
+					//console.log(maxJatekos)
+				}
+				
+				if(jatekosok[0].name == nev && readyjatekosok.length >= data.user.maxPlayerCount)
+				{
+					isHost = true;
+					inditas.innerHTML = `<button class='button-with-icon' id="inditasGomb" onclick='indit()'>Indítás</button>`;
+
+				}
+
+				//readyNevek = readyjatekosok.filter(e => e.readyState == "ready").
+				//console.log(readyNevek)
+
+				});
+		}
+
+        
+        //loginGe
+		
+		
+	}
+
+    
+    function userList(players)
+	{
+		jatekosok = [];
+		let userDiv=document.getElementById("userek");
+		userDiv.innerHTML="";
+		players.forEach(p => {
+
+			let blokk=document.createElement("div");
+			blokk.innerHTML =`${p.name}`;
+			blokk.classList = "userBlokk text-white "
+			
+			if(p.readyState == "ready")
+			{
+				blokk.innerHTML += "<span class='allapotjelolo bg-success'>"+p.readyState+"</span>"
+			}
+			else if(p.readyState == "not ready")
+			{
+				blokk.innerHTML += "<span class='allapotjelolo bg-danger'>"+p.readyState+"</span>"
+			}
+			else if(p.readyState == "pass")
+			{
+				blokk.innerHTML += "<span class='allapotjelolo bg-secondary'>"+p.readyState+"</span>"
+			}
+			blokk.innerHTML+=`<button class="kick btn btn-light" onclick="kick('${p.name}')">kick</button>`;
+			blokk.innerHTML+=`<button class="ready btn btn-light" onclick="ready('${p.name}')">ready</button>`;
+			userDiv.appendChild(blokk);
+
+			if(!jatekosok.includes(p))
+			{
+				jatekosok.push(p);
+			}
+			
+		});
+
+		//console.log(jatekosok)
+
+	}
+    
+    	
+	function ready(playername)
+	{
+		nev = document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
+
+		if(readyjatekosok.length < maxJatekos)
+		{
+			fetch(`${url}/zsirozas/player/${nev}/${kod}`,{method:"PUT",body:JSON.stringify({ name: playername })})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					document.getElementById("userek").innerHTML=data.error;
+				}
+				else
+				{
+					userList(data.user.players);
+				}				
+			});
+		}
+		else
+		{
+			alert("Elkéstél öcsipox!")
+			console.log(readyjatekosok.length,maxJatekos)
+		}
+
+		
+		
+		
+		
+	}
+
+    function kick(playername)
+	{
+		const nev=document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
+
+		fetch(`${url}/zsirozas/player/${nev}/${kod}`,{method:"DELETE",body:JSON.stringify({ name: playername })})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null && playerszam < maxJatekos)
+				{
+					document.getElementById("userek").innerHTML=data.error;
+				}
+				else
+				{
+					userList(data.user.players);
+				}
+            
+			});
+	}
+
+    function frissit()
+    {
+        setInterval(loginGet(),1000)
+    }
+
+
+	function indit()
+	{
+
+		console.log(window.location.href)
+
+		console.log(readyjatekosok)
+
+
+		let adat = "start"
+
+		const nev=document.getElementById("nev").value;
+		const kod=document.getElementById("kod").value;
+		if(nev=="" || kod=="") return;
+
+		//const jatekData=document.getElementById("dataText").value;
+		
+		fetch(`${url}/zsirozas/turn/${nev}/${kod}`,{method:"POST",body:JSON.stringify({data:adat})})
+			.then(r=>r.json())
+			.then(data=>{
+				console.log(data);
+				if(data.error!=null)
+				{
+					console.log(data.error)
+				}
+				else
+				{
+					console.log(adat)
+				}	
+			})
+
+		
+	}
+
+
+	
+
+
+
+    </script>
+</body>
+</html>

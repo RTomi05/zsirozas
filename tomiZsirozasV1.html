@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Zsírozás</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+body { background:#063; font-family: Arial; color:white; }
+.hand, .table { display:flex; gap:10px; margin:10px 0; flex-wrap: wrap; }
+.card { width:200px; height:280px; border-radius:10px; cursor:pointer; border:2px solid transparent; }
+.card img { width:100%; height:100%; border-radius:10px; }
+.card:hover { border: 3px solid blue; }
+.disabled { opacity:0.4; pointer-events:none; }
+.area { background:#0005; padding:10px; border-radius:8px; margin-bottom:20px; }
+.table-area { position: relative; display: flex; align-items: center; min-height: 290px; }
+.table-area .table { flex: 1 1 auto; }
+#passBtn { height: 60px; width: 120px; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); padding:8px 14px; background:#ffffff; border:none; border-radius:5px; color:rgb(0, 0, 0); font-weight:bold; cursor:pointer; display: none; z-index: 10; margin-left: 500px; }
+</style>
+</head>
+
+<body>
+<h1>Zsírozás</h1>
+<h1 id="jatekVegeKiir" style="text-align: center;"></h1>
+<h1 id="gyoztesKiir" style="text-align: center;"></h1>
+<h1 id="pontokAVegen" style="text-align: center;"></h1>
+<div class="area">
+    <b style="color: yellow; font-size: 20px;">SZOBAKÓD: <span id="roomCodeDisplay"></span></b><br>
+    <b>Aktív játékos:</b> <span id="player"></span>
+    
+    <div id="scores" style="margin-top:8px">J1: 0 — J2: 0 (Összesen: 0/8)</div>
+    <div id="roundInfo" style="margin-top:4px; font-style:italic;">Csatlakozás a hálózathoz...</div>
+</div>
+
+<h3 id="h3-p1">Játékos 1</h3>
+<div class="hand" id="hand0"></div>
+
+<h3>Asztal</h3>
+<div class="table-area">
+    <div class="table" id="table"></div>
+    <button id="passBtn" class="passzbtn" onclick="uiPassz()">Passz</button> 
+</div>
+
+<h3 id="h3-p2">Játékos 2</h3>
+<div class="hand" id="hand1"></div>
+
+<script>
+// Alap kártya beállítások
+const szinek = ["zöld","szív","tök","makk"];
+const ertekek = ["7","8","9","10","alsó","felső","király","ász"];
+const szin = { "zöld": "level", "szív": "sziv", "tök": "tok", "makk": "makk" };
+const ertek = { "7":"7", "8":"8", "9":"9", "10":"10", "alsó":"also", "felső":"felso", "király":"kiraly", "ász":"asz" };
+
+function kartyakep(c){ return `kartyak/${szin[c.s]}${ertek[c.v]}.png`; }
+
+// Játék állapot változói
+let pakli = [];
+let kezek = [[], []];
+let asztal = [];
+let aktualis = 0;
+let korKezdo = 0;
+let pontok = [0, 0];
+let lastAttacker = null;
+const MAX_PONTOK = 80;
+
+// --- PEERJS HÁLÓZAT LOGIKA ---
+// A tetejére felvesszük a szerep változót a kód és a név mellé
+const urlParams = new URLSearchParams(window.location.search);
+const szobaKod = urlParams.get('kod') || "TESZT";
+const szerep = urlParams.get('szerep'); // "host" vagy "player"
+document.getElementById("roomCodeDisplay").textContent = szobaKod;
+
+let peer;
+let conn;
+let amIHost = false; 
+let myPlayerIndex = 1; 
+let gameStarted = false;
+
+function initMultiplayer() {
+    const hostId = `zsirozas-${szobaKod}-host`;
+
+    if (szerep === 'host') {
+        // --- MI VAGYUNK A HOST (JÁTÉKOS 1) ---
+        amIHost = true;
+        myPlayerIndex = 0;
+        peer = new Peer(hostId); // Létrehozzuk a szobát
+
+        peer.on('open', (id) => {
+            document.getElementById("roundInfo").textContent = "Te vagy a Host (J1). Mondd meg a kódot a barátodnak, és várd meg amíg csatlakozik...";
+            
+            peer.on('connection', (connection) => {
+                if (conn) return;
+                conn = connection;
+                conn.on('open', () => {
+                    document.getElementById("roundInfo").textContent = "Játékos 2 csatlakozott! Kezdődik a játék.";
+                    gameStarted = true;
+                    korKezdo = Math.floor(Math.random() * 2);
+                    paklitad();
+                    kever(pakli);
+                    oszt();
+                    aktualis = korKezdo;
+                    frissit(); 
+                });
+
+                conn.on('data', (data) => {
+                    if (data.type === 'PLAY') jatszik(data.p, data.idx);
+                    else if (data.type === 'PASS') passz();
+                });
+            });
+        });
+
+    } else {
+        // --- MI VAGYUNK A CSATLAKOZÓ (JÁTÉKOS 2) ---
+        amIHost = false;
+        myPlayerIndex = 1;
+        peer = new Peer(); // Csak egy sima vendég vagyunk
+        
+        peer.on('open', (id) => {
+            document.getElementById("roundInfo").textContent = "Csatlakozás a Hosthoz...";
+            conn = peer.connect(hostId); // Rácsatlakozunk a szobára
+            
+            conn.on('open', () => {
+                document.getElementById("roundInfo").textContent = "Sikeresen csatlakoztál! Várakozás az osztásra...";
+                gameStarted = true;
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'UPDATE_STATE') {
+                    asztal = data.state.asztal;
+                    kezek = data.state.kezek;
+                    aktualis = data.state.aktualis;
+                    korKezdo = data.state.korKezdo;
+                    pontok = data.state.pontok;
+                    lastAttacker = data.state.lastAttacker;
+                    
+                    renderDOM();
+                    document.getElementById("roundInfo").textContent = data.state.roundInfoText;
+                    document.getElementById("scores").textContent = data.state.scoresText;
+                    document.getElementById("passBtn").style.display = data.state.passBtnDisplay;
+                    document.getElementById("passBtn").disabled = data.state.passBtnDisabled;
+                    document.getElementById("jatekVegeKiir").textContent = data.state.jatekVegeKiirText;
+                    document.getElementById("gyoztesKiir").textContent = data.state.gyoztesKiirText;
+                    document.getElementById("pontokAVegen").textContent = data.state.pontokAVegenText;
+                }
+            });
+        });
+    }
+}
+
+function broadcastState() {
+    if (!amIHost || !conn || !conn.open) return;
+    conn.send({ 
+        type: 'UPDATE_STATE', 
+        state: {
+            asztal, kezek, aktualis, korKezdo, pontok, lastAttacker,
+            roundInfoText: document.getElementById("roundInfo").textContent,
+            scoresText: document.getElementById("scores").textContent,
+            passBtnDisplay: document.getElementById("passBtn").style.display,
+            passBtnDisabled: document.getElementById("passBtn").disabled,
+            jatekVegeKiirText: document.getElementById("jatekVegeKiir").textContent,
+            gyoztesKiirText: document.getElementById("gyoztesKiir").textContent,
+            pontokAVegenText: document.getElementById("pontokAVegen").textContent
+        } 
+    });
+}
+
+// --- ESEMÉNYEK KEZELÉSE A GOMBOKNÁL ---
+function uiJatszik(p, idx) {
+    if (!gameStarted) return;
+    if (p !== myPlayerIndex) return; // Nem mozgathatja a másik lapját
+    if (aktualis !== myPlayerIndex) {
+        alert("Nem te következel!"); return;
+    }
+    if (amIHost) jatszik(p, idx);
+    else conn.send({ type: 'PLAY', p: p, idx: idx });
+}
+
+function uiPassz() {
+    if (!gameStarted) return;
+    if (aktualis !== myPlayerIndex) {
+        alert("Nem te következel!"); return;
+    }
+    if (amIHost) passz();
+    else conn.send({ type: 'PASS' });
+}
+
+
+// --- JÁTÉK SZABÁLY LOGIKÁK (Ez csak a Host gépen fut) ---
+function kartyaPont(c){ return (c.v === "10" || c.v === "ász") ? 10 : 0; }
+
+function paklitad(){
+    pakli = [];
+    szinek.forEach(s => { ertekek.forEach(v => { pakli.push({s, v}); }); });
+}
+
+function kever(a){
+    for(let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+}
+
+function oszt(){
+    kezek[0] = []; kezek[1] = [];
+    for(let i = 0; i < 4; i++){
+        if(pakli.length > 0) kezek[0].push(pakli.pop());
+        if(pakli.length > 0) kezek[1].push(pakli.pop());
+    }
+}
+
+function utolap(card1, card2){
+    return card2.v === "7" || card2.v === card1.v || card1.v === "7";
+}
+
+function vanUtolapja(jatekos, utendoLap){
+    return kezek[jatekos].some(c => utolap(utendoLap, c));
+}
+
+function huz(jatekos){
+    while(pakli.length > 0 && kezek[jatekos].length < 4){
+        kezek[jatekos].push(pakli.pop());
+    }
+}
+
+function equalDraw(player1, player2){
+    const cardsNeeded = 8 - (kezek[player1].length + kezek[player2].length);
+    const cardsAvailable = pakli.length;
+    if(cardsAvailable >= cardsNeeded) {
+        huz(player1); huz(player2);
+    } else {
+        const cardsPerPlayer = Math.floor(cardsAvailable / 2);
+        for(let i = 0; i < cardsPerPlayer; i++) {
+            if(pakli.length > 0) kezek[player1].push(pakli.pop());
+            if(pakli.length > 0) kezek[player2].push(pakli.pop());
+        }
+    }
+}
+
+function jatekVege(){
+    if(pakli.length === 0 && (kezek[0].length === 0 || kezek[1].length === 0)){
+        for(let p = 0; p < 2; p++){
+            if(kezek[p].length > 0 && kezek[p].every(c => c.v === "7")){
+                const masik = 1 - p;
+                document.getElementById("jatekVegeKiir").textContent = `Játékos ${p+1} veszített (csak hetese maradt).`;
+                document.getElementById("gyoztesKiir").textContent = `Győztes: Játékos ${masik+1}`;
+                document.querySelectorAll('.hand .card').forEach(c => c.classList.add('disabled'));
+                document.getElementById("passBtn").style.display = "none";
+                if(amIHost) broadcastState();
+                return true;
+            }
+        }
+        
+        const winner = pontok[0] > pontok[1] ? 1 : (pontok[1] > pontok[0] ? 2 : 0);
+        if(winner === 0){
+            document.getElementById("roundInfo").textContent = "Véget ért a játék.";
+            document.getElementById("gyoztesKiir").textContent = `A játék véget ért! Döntetlen!`;
+            document.getElementById("pontokAVegen").textContent = `J1: ${pontok[0]} pont — J2: ${pontok[1]} pont. Az utolsó ütést vivő játékos nyer!`;
+        } else {
+            document.getElementById("roundInfo").textContent = "Véget ért a játék.";
+            document.getElementById("jatekVegeKiir").textContent = `A játék véget ért!`;
+            document.getElementById("gyoztesKiir").textContent = `Győztes: Játékos ${winner}`;
+            document.getElementById("pontokAVegen").textContent = `Játékos 1: ${pontok[0]} pont — Játékos 2: ${pontok[1]} pont`;
+        }
+        document.querySelectorAll('.hand .card').forEach(c => c.classList.add('disabled'));
+        document.getElementById("passBtn").style.display = "none";
+        
+        // Cél, hogy a DOM után elküldjük a végső képet
+        setTimeout(() => { if(amIHost) broadcastState(); }, 100); 
+        return true;
+    }
+    return false;
+}
+
+function passz(){
+    if(asztal.length !== 2 && asztal.length !== 4 && asztal.length !== 6) return;
+    if(aktualis !== korKezdo) return;
+    let hasHit = false;
+    if(asztal.length === 2) hasHit = utolap(asztal[0], asztal[1]);
+    else if(asztal.length === 4 || asztal.length === 6) hasHit = true; 
+    
+    if(!hasHit) return;
+    if(asztal.length === 2){
+        const isDoubleSeven = asztal[0].v === "7" && asztal[1].v === "7";
+        const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+        if(isDoubleSeven && !hasSevenInHand) return;
+    }
+    
+    const winner = 1 - korKezdo;
+    let hasValid = false;
+    if(asztal.length > 0) hasValid = vanUtolapja(aktualis, asztal[0]); 
+    if(!hasValid) return;
+    
+    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+    pontok[winner] += points;
+    document.getElementById("roundInfo").textContent = `Passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+    equalDraw(winner, 1 - winner);
+    korKezdo = winner; aktualis = korKezdo; asztal = []; lastAttacker = null;
+    
+    if(jatekVege()) return;
+    frissit();
+}
+
+function jatszik(p, idx){
+    const card = kezek[p][idx];
+    if(asztal.length === 0){
+        asztal.push(card); kezek[p].splice(idx, 1);
+        korKezdo = p; lastAttacker = p; aktualis = 1 - p;
+        frissit(); return;
+    }
+
+    if(asztal.length === 1){
+        asztal.push(card); kezek[p].splice(idx, 1);
+        if(utolap(asztal[0], asztal[1])){
+            lastAttacker = korKezdo;
+            document.getElementById("roundInfo").textContent = "Ütés! A kör kezdője üthet tovább vagy passzolhat.";
+            aktualis = korKezdo;
+        } else {
+            const winner = korKezdo;
+            const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+            pontok[winner] += points;
+            document.getElementById("roundInfo").textContent = `Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+            equalDraw(winner, 1 - winner);
+            korKezdo = winner; aktualis = korKezdo; asztal = []; lastAttacker = null;
+            if(jatekVege()) return;
+        }
+        frissit(); return;
+    }
+
+    const prev = asztal[asztal.length - 1];
+    const isHit = utolap(prev, card);
+    asztal.push(card); kezek[p].splice(idx, 1);
+
+    if(isHit){
+        lastAttacker = p; aktualis = 1 - p;
+        if(p === korKezdo) document.getElementById("roundInfo").textContent = "Ütés! A kör kezdője üthet tovább vagy passzolhat.";
+        else document.getElementById("roundInfo").textContent = "Ütés! A másik játékos üthet tovább vagy passzolhat.";
+        frissit(); return;
+    } else {
+        const winner = lastAttacker !== null ? lastAttacker : korKezdo;
+        const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+        pontok[winner] += points;
+        document.getElementById("roundInfo").textContent = `Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+        equalDraw(winner, 1 - winner);
+        korKezdo = winner; aktualis = korKezdo; asztal = []; lastAttacker = null;
+        if(jatekVege()) return;
+        frissit(); return;
+    }
+}
+
+// --- KIRAJZOLÁS ---
+function kartyaElem(c, p, i){
+    const d = document.createElement("div");
+    d.className = "card";
+    const img = document.createElement("img");
+    
+    // Titkosítás! Csak a saját lapomat (vagy az asztalt) látom rendesen
+    if (p === undefined || p === myPlayerIndex) {
+        img.src = kartyakep(c);
+    } else {
+        img.src = "kartyak/MonaZita.png"; 
+        d.style.backgroundColor = "#225588"; // Ha hiányzik a hátlap kép
+    }
+
+    d.appendChild(img);
+    if(p !== undefined) d.onclick = () => uiJatszik(p, i);
+    return d;
+}
+
+function renderDOM() {
+    document.getElementById("player").textContent = "Játékos " + (aktualis + 1);
+    document.getElementById("h3-p1").textContent = myPlayerIndex === 0 ? "Játékos 1 (Te)" : "Játékos 1";
+    document.getElementById("h3-p2").textContent = myPlayerIndex === 1 ? "Játékos 2 (Te)" : "Játékos 2";
+
+    document.getElementById("table").innerHTML = "";
+    document.getElementById("hand0").innerHTML = "";
+    document.getElementById("hand1").innerHTML = "";
+
+    asztal.forEach(c => { document.getElementById("table").appendChild(kartyaElem(c)); });
+    kezek.forEach((h, p) => {
+        h.forEach((c, i) => {
+            const d = kartyaElem(c, p, i);
+            if(p !== aktualis) d.classList.add("disabled");
+            document.getElementById("hand" + p).appendChild(d);
+        });
+    });
+}
+
+function frissit(){
+    renderDOM();
+    
+    const scoresEl = document.getElementById("scores");
+    if(scoresEl){
+        const total = pontok[0] + pontok[1];
+        scoresEl.textContent = `J1: ${pontok[0]} — J2: ${pontok[1]} (Összesen: ${total}/${MAX_PONTOK})`;
+    }
+
+    // A logika és szinkronizáció csak a Host gépen fut
+    if (amIHost) {
+        hostJatekLogika();
+        broadcastState(); 
+    }
+}
+
+// --- AZ ÖSSZES AUTOMATIKUS PASSZ LOGIKÁD (Csak Host futtatja) ---
+function hostJatekLogika() {
+    const roundInfo = document.getElementById("roundInfo");
+    const passBtn = document.getElementById("passBtn");
+    
+    if(asztal.length === 2 && utolap(asztal[0], asztal[1]) && aktualis === korKezdo) {  
+        const isDoubleSeven = asztal[0].v === "7" && asztal[1].v === "7";
+        const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+        const autoPassSeven = isDoubleSeven && !hasSevenInHand;
+        const equalHands = kezek[0].length === kezek[1].length;
+        const anyEmptyHands = kezek[0].length === 0 || kezek[1].length === 0;
+        
+        let hasValid = kezek[aktualis].some(c => c.v === asztal[1].v || c.v === "7");
+        if(autoPassSeven) hasValid = false;
+
+        if(anyEmptyHands) {
+            passBtn.style.display = "none";
+            roundInfo.textContent = "Nincs több lap a kezekben - automatikus passz.";
+            setTimeout(() => {
+                if(asztal.length === 2 && utolap(asztal[0], asztal[1]) && aktualis === korKezdo) {
+                    const winner = 1 - korKezdo;
+                    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                    pontok[winner] += points;
+                    roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                    equalDraw(winner, 1 - winner);
+                    korKezdo = winner; aktualis = korKezdo; asztal = [];
+                    if(!jatekVege()) frissit();
+                }
+            }, 300);
+        }
+        else if(!hasValid && equalHands) {
+            roundInfo.textContent = autoPassSeven ? "Nincs hetese - automatikus passz!" : "Nincs ütőlap - automatikus passz!";
+            passBtn.style.display = "none";
+            setTimeout(() => {
+                if(asztal.length === 2 && utolap(asztal[0], asztal[1]) && aktualis === korKezdo) {
+                    const winner = 1 - korKezdo;
+                    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                    pontok[winner] += points;
+                    roundInfo.textContent = autoPassSeven ? `Automatikus passz (nincs hetes)! Játékos ${winner+1} viszi a lapokat, (${points} pont).` : `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                    equalDraw(winner, 1 - winner);
+                    korKezdo = winner; aktualis = korKezdo; asztal = [];
+                    if(!jatekVege()) frissit();
+                }
+            }, 500);
+        }
+        else if(!hasValid) {
+            passBtn.style.display = "none";
+            roundInfo.textContent = autoPassSeven ? "Nincs hetese - kötelező tenni, majd automatikus passz." : "Nincs ütőlap - kötelező tenni, majd automatikus passz.";
+            setTimeout(() => {
+                if(asztal.length === 2 && aktualis === korKezdo && !kezek[aktualis].some(c => c.v === asztal[1].v || c.v === "7")){
+                    if(kezek[aktualis].length > 0) asztal.push(kezek[aktualis].shift());
+                    const winner = lastAttacker !== null ? lastAttacker : korKezdo;
+                    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                    pontok[winner] += points;
+                    roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                    equalDraw(winner, 1 - winner);
+                    korKezdo = winner; aktualis = korKezdo; asztal = []; lastAttacker = null;
+                    if(!jatekVege()) frissit();
+                }
+            }, 400);
+        } else {
+            passBtn.style.display = "inline-block";
+            passBtn.disabled = false;
+            roundInfo.textContent = "Ütés! Van ütőlapod - továbbüthetsz vagy passzolhatsz.";
+        }
+    } else {
+        passBtn.style.display = "none";
+        passBtn.disabled = true;
+
+        if(asztal.length === 4 || asztal.length === 6){
+            const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+            const hasValid = asztal.length > 0 ? vanUtolapja(aktualis, asztal[0]) : false; 
+            const lastIsSevenNoHit = asztal[0] && asztal[0].v === "7" && !hasValid && !hasSevenInHand;
+            if(!hasValid || lastIsSevenNoHit){
+                roundInfo.textContent = `Nincs ütőlapod a ${asztal.length} lapon - automatikus passz.`;
+                setTimeout(() => {
+                    const winner = lastAttacker !== null ? lastAttacker : korKezdo;
+                    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                    pontok[winner] += points;
+                    roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                    equalDraw(winner, 1 - winner);
+                    korKezdo = winner; aktualis = korKezdo; asztal = []; lastAttacker = null;
+                    if(!jatekVege()) frissit();
+                }, 350);
+            } else {
+                passBtn.style.display = "inline-block";
+                passBtn.disabled = false;
+                roundInfo.textContent = `${asztal.length} lap az asztalon - van ütőlapod: továbbüthetsz vagy passzolhatsz.`;
+            }
+            return;
+        }
+        
+        if(asztal.length === 8){
+            roundInfo.textContent = "8 lap az asztalon - automatikus passz.";
+            setTimeout(() => {
+                if(asztal.length === 8){
+                    const winner = lastAttacker !== null ? lastAttacker : korKezdo;
+                    const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                    pontok[winner] += points;
+                    roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                    equalDraw(winner, 1 - winner);
+                    korKezdo = winner; aktualis = korKezdo; asztal = []; lastAttacker = null;
+                    if(!jatekVege()) frissit();
+                }
+            }, 350);
+            return;
+        }
+
+        if(asztal.length === 1){
+            roundInfo.textContent = "Válasszon lapot a másik játékos!";
+        } else if(asztal.length === 2){
+            if(utolap(asztal[0], asztal[1])){
+                if(aktualis !== korKezdo) roundInfo.textContent = "Ütés! A kör kezdője üthet tovább!";
+            } else {
+                roundInfo.textContent = "Nem ütés, a kör kezdője viszi a lapokat!";
+            }
+        } else if(asztal.length %2 !== 0 && asztal.length > 0){
+            const last = asztal[asztal.length - 1];
+            const hasSevenInHand = kezek[aktualis].some(c => c.v === "7");
+            const hasValid = asztal.length > 0 ? vanUtolapja(aktualis, asztal[0]) : false; 
+            const equalHands = kezek[0].length === kezek[1].length;
+            if(last.v === "7" && !hasValid && !hasSevenInHand && equalHands){
+                roundInfo.textContent = "Hetes az utolsó lap és nincs ütőlapod vagy hetesed - automatikus passz.";
+                setTimeout(() => {
+                    if(asztal.length %2 !== 0){
+                        const winner = 1 - korKezdo;
+                        const points = asztal.reduce((sum, c) => sum + kartyaPont(c), 0);
+                        pontok[winner] += points;
+                        roundInfo.textContent = `Automatikus passz! Játékos ${winner+1} viszi a lapokat, (${points} pont).`;
+                        equalDraw(winner, 1 - winner);
+                        korKezdo = winner; aktualis = korKezdo; asztal = []; lastAttacker = null;
+                        if(!jatekVege()) frissit();
+                    }
+                }, 350);
+            } else {
+                roundInfo.textContent = "Tegyél még egy lapot! ";
+            }
+        } else if(asztal.length === 0){
+            roundInfo.textContent = "Új kör kezdődik.";
+        }
+    }
+}
+
+// Inicializálás
+initMultiplayer();
+
+</script>
+</body>
+</html>
