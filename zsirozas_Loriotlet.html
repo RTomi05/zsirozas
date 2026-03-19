@@ -105,13 +105,15 @@
     <script>
 
         
-        const kartyak = ["level7","level8","level9","level10","levelalso","levelfelso","levelkiraly","levelasz",
+        let kartyak = ["level7","level8","level9","level10","levelalso","levelfelso","levelkiraly","levelasz",
                 "makk7","makk8","makk9","makk10","makkalso","makkfelso","makkkiraly","makkasz",
                 "sziv7","sziv8","sziv9","sziv10","szivalso","szivfelso","szivkiraly","szivasz",
                 "tok7","tok8","tok9","tok10","tokalso","tokfelso","tokkiraly","tokasz"]
 
         let kez =[];
 
+
+        let hely= window.location.href
 
         function oszt()
         {
@@ -131,7 +133,9 @@
                     osztott.push(sorsolt);
                     let kep = document.createElement("img");
                     kep.src = `./kartyak/${sorsolt}.png`;
+                    kep.onclick = dataPost();
                     kartya.appendChild(kep);
+
                     sorsolt = "";
                 }
                 else
@@ -146,9 +150,44 @@
             kez = osztott;
             console.log(kez)
 
+            kartyak = kartyak.filter(e => !kez.includes(e));
+
+            console.log(kartyak)
+
+
+        }
+
+
+        function dataPost()
+        {
+
+            let adatok = hely.split("/")
+            adatok = adatok[adatok.length-1].split("?")[1].split("&")
+
+            console.log(adatok)
             
+            const nev = "";
+            const kod = document.getElementById("kod2").value;
+        
+        if(nev=="" || kod=="" || jatek=="") return;
 
+        const jatekData = document.getElementById("dataText").value;
+        fetch(`${jatek}/turn/${nev}/${kod}`,{method:"POST",body:JSON.stringify({data:jatekData})})
+            .then(r=>r.json())
+            .then(data=>{
+                console.log(data);
+                if(data.error!=null) {
 
+                    console.log()
+                    document.getElementById("valasz").innerHTML=data.error;
+                    document.getElementById("data").innerHTML="";
+                } 
+                else {
+                    document.getElementById("valasz").innerHTML="";
+                    document.getElementById("data").innerHTML=`<strong>current user:</strong> ${data.user.players[data.user.currentPlayer].name} (${data.user.currentPlayer})`;
+                    document.getElementById("data").innerHTML+=`<br><strong>data:</strong> ${JSON.stringify(data.data)}`;
+                }               
+            })*/
         }
 
         
