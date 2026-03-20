@@ -79,7 +79,7 @@
 }
     </style>
 </head>
-<body>
+<body onload="adatMegszerez()">
     <h1>Zsírozás - Projektmunka</h1>
     <h1>MOST MÁR NEM TUDSZ HÜLYESÉGET RAKNI! (DE AZÉRT NE PRÓBÁLD MEG)</h1>
     <h1 id="jatekVegeKiir" style="text-align: center;"></h1>
@@ -112,6 +112,11 @@
 
         let kez =[];
 
+        let nev = "";
+        let kod = "";
+        let isHost = false;
+        let maxJatekos = 0;
+
 
         let hely= window.location.href
 
@@ -133,7 +138,7 @@
                     osztott.push(sorsolt);
                     let kep = document.createElement("img");
                     kep.src = `./kartyak/${sorsolt}.png`;
-                    kep.onclick = dataPost();
+                    //kep.onclick = dataPost();
                     kartya.appendChild(kep);
 
                     sorsolt = "";
@@ -158,36 +163,41 @@
         }
 
 
-        function dataPost()
+        function adatMegszerez()
         {
 
             let adatok = hely.split("/")
             adatok = adatok[adatok.length-1].split("?")[1].split("&")
 
-            console.log(adatok)
+            console.log(adatok);
+
+            nev = adatok[0].split("=")[1];
+            kod = adatok[1].split("=")[1];
+            isHost = adatok[3].split("=")[1].slice(3);
             
-            const nev = "";
-            const kod = document.getElementById("kod2").value;
+            console.log(nev,kod,isHost)
+
+
         
-        if(nev=="" || kod=="" || jatek=="") return;
+        /*if(nev=="" || kod=="" || jatek=="") return;
 
         const jatekData = document.getElementById("dataText").value;
-        fetch(`${jatek}/turn/${nev}/${kod}`,{method:"POST",body:JSON.stringify({data:jatekData})})
-            .then(r=>r.json())
-            .then(data=>{
-                console.log(data);
-                if(data.error!=null) {
+            fetch(`${jatek}/turn/${nev}/${kod}`,{method:"POST",body:JSON.stringify({data:jatekData})})
+                .then(r=>r.json())
+                .then(data=>{
+                    console.log(data);
+                    if(data.error!=null) {
 
-                    console.log()
-                    document.getElementById("valasz").innerHTML=data.error;
-                    document.getElementById("data").innerHTML="";
-                } 
-                else {
-                    document.getElementById("valasz").innerHTML="";
-                    document.getElementById("data").innerHTML=`<strong>current user:</strong> ${data.user.players[data.user.currentPlayer].name} (${data.user.currentPlayer})`;
-                    document.getElementById("data").innerHTML+=`<br><strong>data:</strong> ${JSON.stringify(data.data)}`;
-                }               
-            })*/
+                        console.log()
+                        document.getElementById("valasz").innerHTML=data.error;
+                        document.getElementById("data").innerHTML="";
+                    } 
+                    else {
+                        document.getElementById("valasz").innerHTML="";
+                        document.getElementById("data").innerHTML=`<strong>current user:</strong> ${data.user.players[data.user.currentPlayer].name} (${data.user.currentPlayer})`;
+                        document.getElementById("data").innerHTML+=`<br><strong>data:</strong> ${JSON.stringify(data.data)}`;
+                    }               
+                })*/
         }
 
         
