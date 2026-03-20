@@ -294,7 +294,7 @@
 					//console.log(readyjatekosok.some(e => e.name === nev))
 					if(data.data == "start" && readyjatekosok.includes(nev))
 					{
-						window.location.replace(`${jatekURL}/?nev=${nev}&kod=${kod}&maxJatekos=${maxJatekos}`)
+						window.location.replace(`${jatekURL}?nev=${nev}&kod=${kod}&maxJatekos=${maxJatekos}&isHost="false"`)
 					}
 					//console.log(maxJatekos)
 				}
